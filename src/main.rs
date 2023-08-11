@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .expect("ERROR: WEBHOOK_URL env has not been set.");
 
     let delay = std::env::var("DELAY")
-        .expect("ERROR: DELAY env was not set")
+        .expect("ERROR: DELAY in .env was not set")
         .parse::<u64>().unwrap();
 
     let client: Client = Client::new();
