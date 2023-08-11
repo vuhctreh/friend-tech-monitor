@@ -1,25 +1,21 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct Webhook {
-    pub content: String,
+    pub content: Option<String>,
     pub username: Option<String>,
     pub avatar_url: Option<String>,
     pub embeds: Option<Vec<Embed>>,
 }
 
 impl Webhook {
-    pub fn new(content: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            content,
+            content: None,
             username: None,
             avatar_url: None,
             embeds: None,
         }
-    }
-
-    pub fn set_content(&mut self, content: String) {
-        self.content = content.to_string();
     }
 
     pub fn set_username(&mut self, username: String) {
@@ -42,13 +38,65 @@ pub struct Embed {
     embed_type: String,
     description: Option<String>,
     url: Option<String>,
-    timestamp: Option<String>,
-    color: Option<u32>,
-    footer: Option<String>, // TODO: make footer object
-    image: Option<String>, // TODO: make image object
-    thumbnail: Option<String>, // TODO: Make thumbnail object
-    video: Option<String>, // TODO: Make video object
-    provider: Option<String>, // TODO: Make provider object
-    author: Option<String>, // TODO: Make author object
-    fields: Option<Vec<String>>, // TODO: Make field object
+    color: u32,
+    footer: Footer,
+    author: Option<Author>,
+}
+
+impl Embed {
+    pub fn new() -> Self {
+        Self {
+            title: None,
+            embed_type: "rich".to_owned(),
+            description: None,
+            url: None,
+            color: 5814783,
+            footer: Footer::new(),
+            author: None,
+        }
+    }
+
+    pub fn set_title(&mut self, title: String) {
+        self.title = Some(title);
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.description = Some(description);
+    }
+
+    pub fn set_url(&mut self, url: String) {
+        self.url = Some(url);
+    }
+
+    pub fn set_author(&mut self, author: Author) {
+        self.author = Some(author);
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Footer {
+    text: String
+}
+
+impl Footer {
+    pub fn new() -> Self {
+        Self {
+            text: "#RRN".to_string()
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Author {
+    name: String,
+    icon_url: String,
+}
+
+impl Author {
+    pub fn new(name: String, icon_url: String) -> Self {
+        Self {
+            name,
+            icon_url
+        }
+    }
 }

@@ -3,6 +3,7 @@ use discord_utils::types::Webhook;
 use crate::kosetto_api::kosetto_client;
 use dotenvy::dotenv;
 use reqwest::{Client};
+use crate::discord_utils::types::{Author, Embed};
 use crate::discord_utils::webhook_utils::post_webhook;
 
 mod kosetto_api;
@@ -18,12 +19,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let client = Client::new();
 
-    let user_info = kosetto_client::get_user(&client, "lazekzeja".to_string())
+    let user_info = kosetto_client::get_user(&client, "test".to_string())
         .await;
 
     match user_info {
         Ok(user_info) => {
-            let webhook = Webhook::new(user_info.users[0].address.clone());
+
+            let mut embed: Embed = Embed::new();
+
+            embed.set_author(Author::new(user_info.users[0].twitter_name.clone(),
+                                         user_info.users[0].twitter_pfp_url.clone()));
+
+            embed.set_title("New User Sign Up".to_string());
+            embed.set_description(format!("Wallet: {} \n Twitter Username: {}",
+                                          user_info.users[0].address.clone(),
+                                          user_info.users[0].twitter_username.clone()));
+
+            let mut webhook = Webhook::new();
+            webhook.set_embeds(vec!(embed));
             let resp = post_webhook(&client, webhook_url, &webhook).await;
 
             match resp {

@@ -9,11 +9,11 @@ pub struct KosettoResponse {
 pub struct User {
     pub address: String,
     #[serde(rename="twitterUsername")]
-    twitter_username: String,
+    pub twitter_username: String,
     #[serde(rename="twitterName")]
-    twitter_name: String,
+    pub twitter_name: String,
     #[serde(rename="twitterPfpUrl")]
-    twitter_pfp_url: String,
+    pub twitter_pfp_url: String,
     #[serde(rename="twitterUserId")]
-    twitter_user_id: String,
+    pub twitter_user_id: String,
 }
