@@ -25,6 +25,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
         for target in monitor_list.clone().iter() {
+
+            println!("LOG: Beginning monitor for: {}", target);
+
             let monitor_target = &target.clone();
 
             let user_info: Result<KosettoResponse, StatusCode> = kosetto_client::get_user(&client, monitor_target)
@@ -53,5 +56,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         println!("LOG: Finished monitoring. Sleeping for 10 seconds...");
         thread::sleep(Duration::from_secs(10));
+        println!("LOG: Beginning new monitoring cycle.");
+        println!("--------------------------------");
     }
 }
