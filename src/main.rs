@@ -19,6 +19,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let webhook_url: String = std::env::var("WEBHOOK_URL")
         .expect("ERROR: WEBHOOK_URL env has not been set.");
 
+    let delay = std::env::var("DELAY")
+        .expect("ERROR: DELAY env was not set")
+        .parse::<u64>().unwrap();
+
     let client: Client = Client::new();
 
     let mut monitor_list: Vec<String> = load_monitor_list().monitor;
@@ -53,9 +57,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     println!("ERROR: status code => {}", e);
                 }
             }
+
+            println!("LOG: Sleeping for 1 second...");
+            thread::sleep(Duration::from_secs(1));
+
         }
-        println!("LOG: Finished monitoring. Sleeping for 10 seconds...");
-        thread::sleep(Duration::from_secs(10));
+
+        println!("LOG: Finished monitoring all targets. Sleeping for 10 seconds...");
+        thread::sleep(Duration::from_secs(delay));
         println!("LOG: Beginning new monitoring cycle.");
         println!("--------------------------------");
     }
