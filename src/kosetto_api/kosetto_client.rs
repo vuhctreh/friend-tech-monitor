@@ -1,13 +1,19 @@
 use reqwest::Client;
-use crate::kosetto_response::KosettoResponse;
+use crate::kosetto_api::types::KosettoResponse;
+use reqwest::StatusCode;
 
-pub(crate) async fn get_user(client: &Client, user: String) -> Result<KosettoResponse, reqwest::Error> {
+pub async fn get_user(client: &Client, user: String) -> Result<KosettoResponse, StatusCode> {
 
-    let resp = client.get(&format!("https://prod-api.kosetto.com/search/users?username={}", user))
+    let url: String = format!("{}{}", std::env::var("KOSETTO_URL").unwrap(), user);
+
+    let resp = client.get(url)
         .send()
-        .await?
-        .json::<KosettoResponse>()
-        .await?;
+        .await
+        .expect("ERROR: Failed to get user from Kosetto API.");
 
-    Ok(resp)
+    match resp.status() {
+        StatusCode::OK => Ok(resp.json::<KosettoResponse>().await.expect("ERROR: Failed to parse Kosetto response.")),
+        StatusCode::NOT_FOUND => Err(StatusCode::NOT_FOUND),
+        _ => Err(resp.status()),
+    }
 }

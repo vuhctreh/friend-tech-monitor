@@ -7,7 +7,7 @@ pub struct KosettoResponse {
 
 #[derive(Deserialize)]
 pub struct User {
-    pub(crate) address: String,
+    pub address: String,
     #[serde(rename="twitterUsername")]
     twitter_username: String,
     #[serde(rename="twitterName")]
