@@ -10,6 +10,7 @@ use crate::kosetto_api::kosetto_client::monitor;
 mod kosetto_api;
 mod discord_utils;
 mod io_utils;
+mod ethereum;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
