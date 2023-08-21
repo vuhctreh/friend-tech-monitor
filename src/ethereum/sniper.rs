@@ -22,7 +22,7 @@ pub async fn snipe(config: &WalletConfig, address: Address, amount: &u64) -> Res
         }
     }
 
-    log::info!("Shares owned: {}", get_owned_shares(config.clone(), address).await);
+    log::info!("Shares owned: {}", get_owned_shares(config.clone(), address).await?);
 
     Ok(())
 }
