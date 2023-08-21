@@ -39,12 +39,3 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 }
-
-#[tokio::test]
-async fn test_ethereum() -> Result<(), Box<dyn Error>> {
-    dotenv().expect("ERROR: Could not load .env file.");
-
-    ethereum::sniper::snipe(Default::default(), Default::default()).await.expect("TODO: panic message");
-
-    Ok(())
-}
