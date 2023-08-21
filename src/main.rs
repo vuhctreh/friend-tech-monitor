@@ -70,3 +70,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
         println!("--------------------------------");
     }
 }
+
+#[tokio::test]
+async fn test_ethereum() -> Result<(), Box<dyn Error>> {
+    dotenv().expect("ERROR: Could not load .env file.");
+
+    ethereum::wallet::test().await.expect("TODO: panic message");
+
+    Ok(())
+}
