@@ -11,6 +11,7 @@ pub async fn search_user(client: &Client, user: &String) -> Result<KosettoRespon
         .await
         .expect("ERROR: Failed to get user from Kosetto API.");
 
+    // TODO: Handle response error properly
     match resp.status() {
         StatusCode::OK => Ok(resp.json::<KosettoResponse>().await.expect("ERROR: Failed to parse Kosetto response.")),
         StatusCode::NOT_FOUND => Err(StatusCode::NOT_FOUND),
@@ -21,10 +22,10 @@ pub async fn search_user(client: &Client, user: &String) -> Result<KosettoRespon
 pub async fn find_user_in_search(user_info: &KosettoResponse, monitor_target: String) -> Option<&User> {
     for user in user_info.users.iter() {
         if user.twitter_username == monitor_target.clone() {
-            print!("LOG: Found user {}.\n", monitor_target);
+            log::info!("Found user {}.", monitor_target);
             return Some(user);
         } else {
-            println!("LOG: {} did not match monitor target.", user.twitter_username.clone());
+            log::info!("{} did not match monitor target.", user.twitter_username.clone());
         }
     }
 

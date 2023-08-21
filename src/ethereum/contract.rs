@@ -7,9 +7,9 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
 
     let transaction_value: U256 = contract.get_buy_price(buy_address.clone(), amount.clone()).await.unwrap();
 
-    println!("LOG: Current price of shares: {}", &transaction_value);
+    log::info!("Current price of shares: {}", &transaction_value);
 
-    println!("LOG: Attempting purchase...");
+    log::info!("Purchase transaction sent...");
 
     let transaction = contract.buy_shares(buy_address.clone(), amount)
         .gas(150000)
@@ -25,13 +25,13 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
         Some(x) => {
             match x.as_u64() {
                 0 => {
-                    println!("WARN: Transaction reverted -> Status: 0");
+                    log::warn!("Transaction reverted -> Status: 0");
                 },
                 1 => {
-                    println!("LOG: Transaction successful -> Status: 1");
+                    log::info!("Transaction successful -> Status: 1");
                 },
                 y => {
-                    println!("LOG: Transaction included with unexpected status: {}", y);
+                    log::info!("Transaction included with unexpected status: {}", y);
                 },
             }
         }

@@ -5,7 +5,7 @@ use crate::ethereum::contract::{call_buy_shares, get_owned_shares};
 pub async fn snipe(config: WalletConfig, address: Address) -> Result<(), String> {
     let  receipt = call_buy_shares(config.clone(), address, 1.into()).await;
 
-    println!("{receipt:?}");
+    log::debug!("{receipt:?}");
 
     match receipt.status {
         Some(status) => {
