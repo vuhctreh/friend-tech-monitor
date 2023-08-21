@@ -1,9 +1,12 @@
+use std::env;
 use reqwest::{Client, Response};
 use reqwest::header::CONTENT_TYPE;
 use crate::discord_utils::types::{Author, Embed, Webhook};
 use crate::kosetto_api::types::User;
 
-pub async fn post_webhook(client: &Client, webhook_url: &String, webhook: &Webhook) -> Result<Response, reqwest::Error> {
+pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response, reqwest::Error> {
+    let webhook_url = env::var("WEBHOOK_URL").unwrap();
+
     let resp: Response = client
         .post(webhook_url)
         .json(&webhook)
@@ -14,7 +17,7 @@ pub async fn post_webhook(client: &Client, webhook_url: &String, webhook: &Webho
     Ok(resp)
 }
 
-pub fn prepare_webhook(user: &User) -> Webhook {
+pub fn prepare_webhook(user: User) -> Webhook {
     let mut embed: Embed = Embed::new();
 
     embed.set_author(Author::new(&user.twitter_username, &user.twitter_pfp_url));
