@@ -42,8 +42,6 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
 }
 
 pub async fn get_owned_shares(config: WalletConfig, address: Address) -> U256 {
-    //let contract = config.contract.clone();
-
     config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
         .await
