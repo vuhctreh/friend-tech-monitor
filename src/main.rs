@@ -15,7 +15,6 @@ mod monitor;
 // TODO: add sniper limit pricing and retries
 // TODO: add take profit
 // TODO: add inventory management
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     SimpleLogger::new().init().unwrap();
