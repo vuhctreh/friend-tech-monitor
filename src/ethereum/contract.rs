@@ -1,6 +1,6 @@
 use std::thread;
 use ethers::core::types::{Address, U256};
-use ethers::prelude::TransactionReceipt;
+use ethers::prelude::{TransactionReceipt};
 use crate::ethereum::config::WalletConfig;
 
 pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> TransactionReceipt {
@@ -48,10 +48,13 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
     transaction
 }
 
-// TODO: remove expect
-pub async fn get_owned_shares(config: WalletConfig, address: Address) -> U256 {
-    config.contract.clone().shares_balance(address, config.wallet_address.clone())
+pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256, String> {
+    let contract_response = config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
-        .await
-        .expect("ERROR: Could not get shares balance.")
+        .await;
+
+    match contract_response {
+        Ok(_) => Ok(contract_response.unwrap()),
+        Err(e) => Err(e.to_string())
+    }
 }
