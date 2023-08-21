@@ -12,7 +12,7 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
     println!("Attempting purchase...");
 
     let transaction = contract.buy_shares(buy_address.clone(), amount)
-        .gas(300000)
+        .gas(150000)
         .value(&transaction_value)
         .send()
         .await
