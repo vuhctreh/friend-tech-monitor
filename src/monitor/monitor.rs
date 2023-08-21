@@ -12,7 +12,6 @@ use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
 use crate::kosetto_api::types::{KosettoResponse};
 
-// TODO: clean this up
 pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<String, String> {
 
     let monitor_map: HashMap<String, u64> = load_monitor_list();
@@ -56,8 +55,6 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
     Ok("h".to_string())
 }
 
-// TODO: clean this up
-// Errors: 1 =
 async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, amount: u64, client: Client) -> Result<(), Error> {
     // Search for monitored user in endpoint -> returns None if not found
     let res = find_user_in_search(&response, &target);

@@ -17,7 +17,10 @@ pub async fn search_user(client: &Client, user: &String) -> Result<KosettoRespon
 
     // TODO: Handle response error properly
     match resp.status() {
-        StatusCode::OK => Ok(resp.json::<KosettoResponse>().await.expect("ERROR: Failed to parse Kosetto response.")),
+        StatusCode::OK => match resp.json::<KosettoResponse>().await {
+            Ok(response) => Ok(response),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
         StatusCode::NOT_FOUND => Err(StatusCode::NOT_FOUND),
         _ => Err(resp.status()),
     }
