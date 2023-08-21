@@ -1,1 +1,2 @@
-mod wallet;
+pub mod wallet;
+mod contract;
