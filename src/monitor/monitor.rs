@@ -32,7 +32,8 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
 
         match user_info {
             Ok(user_info) => {
-                parse_response(config.clone(), user_info, key.clone(), value.clone(), client.clone()).await;
+                let bruh = parse_response(config.clone(), user_info, key.clone(), value.clone(), client.clone()).await;
+                if bruh.is_err() { log::error!("{:?}", bruh) };
             }
             Err(StatusCode::NOT_FOUND) => {
                 log::info!("No users returned from search.");
