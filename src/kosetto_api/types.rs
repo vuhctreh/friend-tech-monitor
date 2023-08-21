@@ -1,11 +1,11 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct KosettoResponse {
     pub users: Vec<User>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct User {
     pub address: String,
     #[serde(rename="twitterUsername")]
