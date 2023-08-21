@@ -43,6 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     let res = monitor(&user_info, monitor_target.clone(), &client, &webhook_url).await;
                     match res {
                         Ok(1) => {
+                            ethereum::wallet::test().await.expect("TODO: panic message");
                             <Vec<String> as AsMut<Vec<String>>>::as_mut(&mut monitor_list).retain(|x| x != monitor_target);
                         },
                         Ok(2) => {
