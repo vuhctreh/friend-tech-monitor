@@ -93,7 +93,10 @@ pub struct Author {
 }
 
 impl Author {
-    pub fn new(name: String, icon_url: String) -> Self {
+    pub fn new(name: &String, icon_url: &String) -> Self {
+        let name = name.to_string();
+        let icon_url = icon_url.to_string();
+
         Self {
             name,
             icon_url

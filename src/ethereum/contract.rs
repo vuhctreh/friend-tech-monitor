@@ -7,9 +7,9 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
 
     let transaction_value: U256 = contract.get_buy_price(buy_address.clone(), amount.clone()).await.unwrap();
 
-    println!("Current price of shares: {}", &transaction_value);
+    println!("LOG: Current price of shares: {}", &transaction_value);
 
-    println!("Attempting purchase...");
+    println!("LOG: Attempting purchase...");
 
     let transaction = contract.buy_shares(buy_address.clone(), amount)
         .gas(150000)

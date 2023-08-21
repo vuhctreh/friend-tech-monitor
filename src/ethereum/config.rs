@@ -29,7 +29,8 @@ abigen!(FriendTechV1, r#"[
 
 #[derive(Clone)]
 pub struct WalletConfig {
-    pub(crate) provider: Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>,
+    pub(crate) provider: Provider<Http>,
+    pub(crate) signer: Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>,
     pub(crate) contract: FriendTechV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>,
     pub(crate) wallet_address: Address,
 }
@@ -41,11 +42,11 @@ impl WalletConfig {
             .parse::<Address>()
             .expect("ERROR: WALLET_ADDRESS env var is not a valid address.");
 
-        let provider = Arc::new({
+        let provider = Provider::<Http>::try_from(
+            std::env::var("RPC_URL").expect("RPC not set in .env.")
+        ).expect("Invalid RPC URL.");
 
-            let provider = Provider::<Http>::try_from(
-                std::env::var("RPC_URL").expect("RPC not set in .env.")
-            ).expect("Invalid RPC URL.");
+        let signer = Arc::new({
 
             let chain_id = provider.get_chainid().await.expect("Failed to get chain id.");
 
@@ -54,15 +55,16 @@ impl WalletConfig {
                 .parse::<LocalWallet>().expect("Invalid private key.")
                 .with_chain_id(chain_id.as_u64());
 
-            SignerMiddleware::new(provider, wallet)
+            SignerMiddleware::new(provider.clone(), wallet)
         });
 
         let contract = FriendTechV1::new("0xEeaA6B7290F35D588072272E75f1D5eA57827f4f"
                                              .parse::<Address>()
-                                             .expect("ERROR: Could not parse contract."), provider.clone());
+                                             .expect("ERROR: Could not parse contract."), signer.clone());
 
         Self {
             provider,
+            signer,
             contract,
             wallet_address,
         }
