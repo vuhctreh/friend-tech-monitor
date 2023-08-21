@@ -21,8 +21,6 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
         .expect("Failed to buy shares.")
         .unwrap();
 
-    println!("Transaction status: {:?}", &transaction.status);
-
     match transaction.status {
         Some(x) => {
             match x.as_u64() {
@@ -49,5 +47,5 @@ pub async fn get_owned_shares(config: WalletConfig, address: Address) -> U256 {
     config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
         .await
-        .expect("bruh")
+        .expect("ERROR: Could not get shares balance.")
 }
