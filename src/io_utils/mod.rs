@@ -1,2 +1,2 @@
 pub mod json_loader;
-mod types;
+pub mod types;
