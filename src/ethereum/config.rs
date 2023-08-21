@@ -58,7 +58,14 @@ impl WalletConfig {
             SignerMiddleware::new(provider.clone(), wallet)
         });
 
-        let contract = FriendTechV1::new("0xEeaA6B7290F35D588072272E75f1D5eA57827f4f"
+        // Contract on Goerli
+        // let contract = FriendTechV1::new("0xEeaA6B7290F35D588072272E75f1D5eA57827f4f"
+        //                                      .parse::<Address>()
+        //                                      .expect("ERROR: Could not parse contract."), signer.clone());
+
+
+        // Contract on Base
+        let contract = FriendTechV1::new("0xCF205808Ed36593aa40a44F10c7f7C2F67d4A4d4"
                                              .parse::<Address>()
                                              .expect("ERROR: Could not parse contract."), signer.clone());
 
