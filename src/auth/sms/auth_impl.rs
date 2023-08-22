@@ -1,11 +1,13 @@
-use reqwest::{Client, Error, Response};
+use reqwest::{Client, Response, StatusCode};
 use reqwest::header::HeaderMap;
 use reqwest::header::*;
+use eyre::{eyre, Result};
 use crate::auth::generate_header_map;
-use crate::auth::sms::types::{SmsAuthRequest, SmsInitRequest};
+use crate::auth::sms::types::{SignTokenRequest, SignTokenResponse, SmsAuthRequest, SmsAuthResponse, SmsInitRequest};
+use crate::io_utils::cli_utils::get_code_from_cli;
 
 // TODO: make generic
-pub async fn init_sms_auth(client: &Client) -> Result<Response, Error> {
+pub async fn init_sms_auth(client: &Client) -> Result<Response> {
     const URL: &str = "https://auth.privy.io/api/v1/passwordless_sms/init";
 
     let sms_init_req = SmsInitRequest::new();
@@ -20,10 +22,14 @@ pub async fn init_sms_auth(client: &Client) -> Result<Response, Error> {
         .send()
         .await?;
 
+    if res.status() != StatusCode::OK {
+        return Err(eyre!("Failed to init sms verification: {}", res.status()));
+    }
+
     Ok(res)
 }
 
-pub async fn verify_sms_auth(client: &Client, code: String) -> Result<Response, Error> {
+pub async fn verify_sms_auth(client: &Client, code: String) -> Result<Response> {
     const URL: &str = "https://auth.privy.io/api/v1/passwordless_sms/authenticate";
 
     let sms_auth_req = SmsAuthRequest::new(code);
@@ -38,5 +44,52 @@ pub async fn verify_sms_auth(client: &Client, code: String) -> Result<Response, 
         .send()
         .await?;
 
+    if res.status() != StatusCode::OK {
+        return Err(eyre!("Failed to verify sms: {}", res.status()));
+    }
+
     Ok(res)
+}
+
+pub async fn sign_auth_token(client: &Client, address: &str, token: String) -> Result<Response> {
+    const URL: &str = "https://prod-api.kosetto.com/signature";
+
+    let sign_auth_req = SignTokenRequest::new(address);
+
+    let body = serde_json::to_string(&sign_auth_req)?;
+
+    let mut headers: HeaderMap = generate_header_map();
+
+    headers.insert(AUTHORIZATION, token.parse()?);
+
+    let res: Response = client.post(URL)
+        .body(body)
+        .headers(headers)
+        .send()
+        .await?;
+
+    if res.status() != StatusCode::OK {
+        return Err(eyre!("Failed to sign auth token: {}", res.status()));
+    }
+    
+    Ok(res)
+}
+
+// TODO: search for wallet in LinkedAccounts rather than using fixed index
+pub async fn generate_auth_token(client: &Client) -> Result<String> {
+    init_sms_auth(client).await?;
+
+    let code: String = get_code_from_cli();
+
+    let verify_res = verify_sms_auth(client, code).await?;
+
+    let verify_res_body: SmsAuthResponse = serde_json::from_str(&*verify_res.text().await?)?;
+
+    let sign_address = &verify_res_body.user.linked_accounts[1].address.clone().unwrap();
+
+    let signature_response = sign_auth_token(&client, sign_address, verify_res_body.token).await?;
+
+    let full_resp: SignTokenResponse = serde_json::from_str(signature_response.text().await?.as_str())?;
+
+    Ok(full_resp.token)
 }

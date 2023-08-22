@@ -1,8 +1,10 @@
 use std::collections::HashMap;
-use std::thread;
+use std::{env, thread};
 use std::time::Duration;
 use ethers::types::Address;
 use reqwest::{Client, Error, Response, StatusCode};
+use eyre::Result;
+use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_webhook};
 use crate::ethereum;
@@ -12,7 +14,7 @@ use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
 use crate::kosetto_api::types::{KosettoResponse};
 
-pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<String, String> {
+pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<String> {
 
     let monitor_map: HashMap<String, u64> = load_monitor_list();
 
@@ -26,21 +28,43 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
         log::info!("Beginning monitor for: {}", key);
         let monitor_target = &key.clone();
 
-        let user_info: Result<KosettoResponse, StatusCode> = kosetto_client::search_user(&client, monitor_target)
-            .await;
+        let load_auth_token = env::var("AUTH_TOKEN");
 
-        match user_info {
-            Ok(user_info) => {
-                let bruh = parse_response(config.clone(), user_info, key.clone(), value.clone(), client.clone()).await;
-                if bruh.is_err() { log::error!("{:?}", bruh) };
+        let mut token: String = String::new();
+
+        match load_auth_token {
+            Ok(_) => {
+                token = load_auth_token.unwrap();
             }
-            Err(StatusCode::NOT_FOUND) => {
+            Err(_) => {
+                token = generate_auth_token(&client).await?;
+            }
+        }
+
+        let resp: Response = kosetto_client::search_user(&client, monitor_target, token)
+            .await?;
+
+        match resp.status() {
+            StatusCode::OK => {
+                let json: KosettoResponse = serde_json::from_str(&resp.text().await?)?;
+                parse_response(config.clone(), json, key.clone(), value.clone(), client.clone()).await?
+            }
+            StatusCode::NOT_FOUND => {
                 log::info!("No users returned from search.");
-                new_map.insert(monitor_target.clone(), *value);
+                new_map.insert(key.clone(), *value);
             }
-            Err(e) => {
-                log::error!("User search failed with status code: {}", e);
-                new_map.insert(monitor_target.clone(), *value);
+            StatusCode::UNAUTHORIZED => {
+                log::warn!("Token expired. Refreshing.");
+
+                let new_token = generate_auth_token(&client).await?;
+
+                env::set_var("AUTH_TOKEN", new_token);
+
+                new_map.insert(key.clone(), *value);
+            }
+            _ => {
+                log::error!("Unexpected status code: {}. Will retry next cycle.", &resp.status());
+                new_map.insert(key.clone(), *value);
             }
         }
 

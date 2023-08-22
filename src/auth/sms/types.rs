@@ -59,3 +59,51 @@ impl SmsAuthRequest {
     }
 }
 
+#[derive(Deserialize, Clone)]
+pub struct SmsAuthResponse {
+    pub user: PrivyUser,
+    is_new_user: bool,
+    pub token: String,
+    refresh_token: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct PrivyUser {
+    id: String,
+    created_at: u64,
+    pub linked_accounts: Vec<LinkedAccounts>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct LinkedAccounts {
+    #[serde(rename="type")]
+    account_type: String,
+    verified_at: u64,
+    phone_number: Option<String>,
+    pub address: Option<String>,
+    chain_id: Option<String>,
+    chain_type: Option<String>,
+    wallet_client: Option<String>,
+    wallet_client_type: Option<String>,
+    connector_type: Option<String>,
+    recovery_method: Option<String>,
+}
+
+#[derive(Serialize, Clone)]
+pub struct SignTokenRequest<'a> {
+    address: &'a str
+}
+
+impl SignTokenRequest<'_> {
+    pub fn new(address: &str) -> SignTokenRequest {
+        SignTokenRequest {
+            address
+        }
+    }
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SignTokenResponse {
+    message: String,
+    pub token: String,
+}

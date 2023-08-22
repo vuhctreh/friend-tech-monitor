@@ -1,29 +1,21 @@
-use reqwest::{Client};
+use reqwest::{Client, Response};
 use crate::kosetto_api::types::{KosettoResponse, User};
-use reqwest::StatusCode;
+use eyre::Result;
 
-pub async fn search_user(client: &Client, user: &String) -> Result<KosettoResponse, StatusCode> {
+pub async fn search_user(client: &Client, user: &String, token: String) -> Result<Response> {
 
     log::info!("Searching for user: {}", user);
 
     let url: String = format!("{}{}", std::env::var("KOSETTO_URL").unwrap(), user);
 
     let resp = client.get(url)
+        .header("authorization", token)
         .send()
-        .await
-        .expect("ERROR: Failed to get user from Kosetto API.");
+        .await?;
 
-    log::info!("Got response.");
+    log::info!("Got user info.");
 
-    // TODO: Handle response error properly
-    match resp.status() {
-        StatusCode::OK => match resp.json::<KosettoResponse>().await {
-            Ok(response) => Ok(response),
-            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR)
-        },
-        StatusCode::NOT_FOUND => Err(StatusCode::NOT_FOUND),
-        _ => Err(resp.status()),
-    }
+    Ok(resp)
 }
 
 pub fn find_user_in_search(user_info: &KosettoResponse, monitor_target: &String) -> Option<User> {
