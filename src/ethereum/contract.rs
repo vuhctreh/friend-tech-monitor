@@ -8,6 +8,8 @@ use crate::ethereum::config::WalletConfig;
 pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> Result<TransactionReceipt> {
     let contract = config.contract.clone();
 
+    log::info!("Shares address: {}", &buy_address);
+
     let mut transaction_value: U256 = contract.get_buy_price_after_fee(buy_address.clone(), amount.clone()).await.unwrap();
 
     let limit_env = std::env::var("LIMIT_PRICE");
@@ -40,7 +42,8 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
 
     while transaction_value == U256::zero() {
         log::info!("Waiting for user to buy shares...");
-        transaction_value = contract.get_buy_price(buy_address.clone(), amount.clone()).await.unwrap();
+        transaction_value = contract.get_buy_price_after_fee(buy_address.clone(), amount.clone()).await.unwrap();
+        log::info!("Transaction value: {}", &transaction_value);
         thread::sleep(std::time::Duration::from_millis(500));
     }
 

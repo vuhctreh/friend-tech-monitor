@@ -1,6 +1,7 @@
 use std::{env, thread};
 use std::env::VarError;
 use serde::{Deserialize, Serialize};
+use eyre::{eyre, Result};
 
 #[derive(Serialize, Clone)]
 pub struct SmsInitRequest {
@@ -9,21 +10,16 @@ pub struct SmsInitRequest {
 }
 
 impl SmsInitRequest {
-    pub fn new() -> SmsInitRequest {
-        let number: Result<String, VarError> = env::var("PHONE_NUMBER");
+    pub fn new() -> Result<SmsInitRequest> {
+        let number: String = env::var("PHONE_NUMBER")?;
 
-        match number {
-            Ok(x) => {
-                SmsInitRequest {
-                    phone_number: x,
-                }
-            }
-            Err(e) => {
-                log::error!("Could not read phone number in env: {}", e);
-                thread::sleep(std::time::Duration::from_secs(4));
-                panic!("{}", e)
-            }
+        if number.is_empty() {
+            return Err(eyre!("PHONE_NUMBER env var is not set."));
         }
+
+        Ok(SmsInitRequest {
+            phone_number: number,
+        })
     }
 }
 
