@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::thread;
 use dotenvy::dotenv;
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
@@ -12,7 +13,7 @@ mod ethereum;
 mod monitor;
 mod auth;
 
-
+// TODO: webhooks for panic
 // TODO: add headless google auth
 // TODO: make sniper and webhook parallel.
 // TODO: add sniper retries
@@ -24,20 +25,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     dotenv().expect("ERROR: Could not load .env file.");
 
-    let delay = std::env::var("DELAY")
-        .expect("ERROR: DELAY in .env was not set")
-        .parse::<u64>().unwrap();
-
-    let client: Client = Client::new();
-
-    let config: WalletConfig = WalletConfig::new().await;
-
     loop {
-        let res =  monitor(client.clone(), config.clone(), delay).await;
+        let res =  monitor(Client::new(), WalletConfig::new().await?, std::env::var("DELAY")?
+            .parse::<u64>()?).await;
 
         match res {
             Ok(_) => {},
-            Err(e) => log::error!("{:?}", e)
+            Err(e) => {
+                log::error!("{:?}", e);
+                thread::sleep(std::time::Duration::from_secs(10));
+                break;
+            }
         }
     }
+
+    Ok(())
 }
