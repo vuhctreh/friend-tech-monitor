@@ -1,9 +1,10 @@
 use ethers::types::Address;
 use ethers::types::U256;
+use eyre::{eyre, Result};
 use crate::ethereum::config::WalletConfig;
 use crate::ethereum::contract::{call_buy_shares, get_owned_shares};
 
-pub async fn snipe(config: &WalletConfig, address: Address, amount: &u64) -> Result<(), String> {
+pub async fn snipe(config: &WalletConfig, address: Address, amount: &u64) -> Result<()> {
 
     let amount = U256::from(amount.clone());
 
@@ -16,16 +17,16 @@ pub async fn snipe(config: &WalletConfig, address: Address, amount: &u64) -> Res
             match tx.status {
                 Some(x) => {
                     if x.is_zero() {
-                        return Err(String::from("Transaction failed!"));
+                        return Err(eyre!("Transaction failed!"));
                     }
                 }
                 None => {
-                    return Err(String::from("No status. Maybe the transaction was not mined?"));
+                    return Err(eyre!("No status. Maybe the transaction was not mined?"));
                 }
             }
         }
         None => {
-            return Err(String::from("No status. Maybe the transaction was not sent?"));
+            return Err(eyre!("Sniping aborted."));
         }
     }
 
