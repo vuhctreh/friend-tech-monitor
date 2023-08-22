@@ -38,6 +38,8 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
             }
             Err(_) => {
                 token = generate_auth_token(&client).await?;
+                // TODO: replace token in .env
+                env::set_var("AUTH_TOKEN", &token);
             }
         }
 
