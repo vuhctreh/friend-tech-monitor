@@ -11,14 +11,21 @@ pub async fn snipe(config: &WalletConfig, address: Address, amount: &u64) -> Res
 
     log::debug!("{receipt:?}");
 
-    match receipt.status {
-        Some(status) => {
-            if status.is_zero() {
-                return Err(String::from("WARN: Transaction failed."));
+    match receipt {
+        Some(tx) => {
+            match tx.status {
+                Some(x) => {
+                    if x.is_zero() {
+                        return Err(String::from("Transaction failed!"));
+                    }
+                }
+                None => {
+                    return Err(String::from("No status. Maybe the transaction was not mined?"));
+                }
             }
         }
         None => {
-            return Err("ERROR: No status".to_string());
+            return Err(String::from("No status. Maybe the transaction was not sent?"));
         }
     }
 

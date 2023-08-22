@@ -10,9 +10,12 @@ mod discord_utils;
 mod io_utils;
 mod ethereum;
 mod monitor;
+mod auth;
 
+
+// TODO: add headless google auth
 // TODO: make sniper and webhook parallel.
-// TODO: add sniper limit pricing and retries
+// TODO: add sniper retries
 // TODO: add take profit
 // TODO: add inventory management
 #[tokio::main]

@@ -1,12 +1,43 @@
 use std::thread;
 use ethers::core::types::{Address, U256};
 use ethers::prelude::{TransactionReceipt};
+use ethers::utils::{parse_ether};
 use crate::ethereum::config::WalletConfig;
 
-pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> TransactionReceipt {
+pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> Option<TransactionReceipt> {
     let contract = config.contract.clone();
 
     let mut transaction_value: U256 = contract.get_buy_price_after_fee(buy_address.clone(), amount.clone()).await.unwrap();
+
+    let limit_env = std::env::var("LIMIT_PRICE");
+
+    let mut limit: U256 = U256::zero();
+
+    match limit_env {
+        Ok(limit_as_string) => {
+            let parsed_limit = parse_ether(limit_as_string);
+
+            match parsed_limit {
+                Ok(x) => {
+                    limit = x;
+                }
+                Err(e) => {
+                    log::error!("Invalid limit price in .env: {}", e);
+                    return None;
+                }
+            }
+
+            log::info!("Limit price: {}", limit);
+        }
+        Err(_) => {
+            return None;
+        }
+    }
+
+    if transaction_value > limit {
+        log::info!("Transaction value is greater than limit price");
+        return None;
+    }
 
     while transaction_value == U256::zero() {
         log::info!("Waiting for user to buy shares...");
@@ -45,7 +76,7 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
         None => {}
     }
 
-    transaction
+    Some(transaction)
 }
 
 pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256, String> {
