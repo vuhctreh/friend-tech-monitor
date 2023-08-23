@@ -6,7 +6,7 @@ pub async fn search_user(client: &Client, user: &String, token: String) -> Resul
 
     log::info!("Searching for user: {}", user);
 
-    let url: String = format!("{}{}", std::env::var("KOSETTO_URL").unwrap(), user);
+    let url: String = format!("https://prod-api.kosetto.com/search/users?username={}", user);
 
     let resp = client.get(url)
         .header("authorization", token)
