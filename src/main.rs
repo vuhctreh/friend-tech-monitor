@@ -12,6 +12,7 @@ mod io_utils;
 mod ethereum;
 mod monitor;
 mod auth;
+mod sniper;
 
 // TODO: webhooks for panic
 // TODO: add headless google auth
