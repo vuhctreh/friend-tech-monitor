@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::{env, thread};
+use std::env::VarError;
 use std::time::Duration;
 use ethers::types::Address;
 use reqwest::{Client, Response, StatusCode};
@@ -12,7 +13,7 @@ use crate::ethereum::config::WalletConfig;
 use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
 use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
-use crate::kosetto_api::types::{KosettoResponse};
+use crate::kosetto_api::types::{KosettoResponse, User};
 
 pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<()> {
 
@@ -26,9 +27,9 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
 
     for (key, value) in monitor_map.iter() {
         log::info!("Beginning monitor for: {}", key);
-        let monitor_target = &key.clone();
+        let monitor_target: &String = &key.clone();
 
-        let load_auth_token = env::var("AUTH_TOKEN");
+        let load_auth_token: Result<String, VarError> = env::var("AUTH_TOKEN");
 
         let mut token: String = String::new();
 
@@ -49,7 +50,7 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
         match resp.status() {
             StatusCode::OK => {
                 let json: KosettoResponse = serde_json::from_str(&resp.text().await?)?;
-                parse_response(config.clone(), json, key.clone(), value.clone(), client.clone()).await?
+                parse_response(config.clone(), json, key.clone(), client.clone()).await?
             }
             StatusCode::NOT_FOUND => {
                 log::info!("No users returned from search.");
@@ -84,8 +85,8 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
     Ok(())
 }
 
-async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, amount: u64, client: Client) -> Result<()> {
-    let res = find_user_in_search(&response, &target);
+async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, client: Client) -> Result<()> {
+    let res: Option<User> = find_user_in_search(&response, &target);
 
     match res {
         Some(matching_user) => {
