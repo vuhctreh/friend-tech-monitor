@@ -1,16 +1,21 @@
 use std::collections::HashMap;
-use std::io::Error;
 use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use eyre::{eyre, Result};
 
-pub fn load_monitor_list() -> HashMap<String, u64> {
-    let data: String = fs::read_to_string("monitor.json").expect("ERROR: Could not read monitor.json.");
+pub fn load_monitor_list() -> Result<HashMap<String, u64>> {
+    let data: String = fs::read_to_string("monitor.json")?;
 
-    serde_json::from_str(&*data).expect("ERROR: Could not parse JSON as not well-formatted.")
+    let map = serde_json::from_str(&*data);
+
+    match map {
+        Ok(m) => Ok(m),
+        Err(e) => Err(eyre!(e))
+    }
 }
 
-pub fn write_monitor_list(monitor_list: HashMap<String, u64>) -> Result<(), Error> {
+pub fn write_monitor_list(monitor_list: HashMap<String, u64>) -> Result<()> {
     let file = File::create("monitor.json")?;
 
     let mut writer = BufWriter::new(file);

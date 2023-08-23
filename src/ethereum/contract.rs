@@ -2,10 +2,13 @@ use std::thread;
 use ethers::core::types::{Address, U256};
 use ethers::prelude::{TransactionReceipt};
 use ethers::utils::{parse_ether};
+use eyre::{eyre, Result};
 use crate::ethereum::config::WalletConfig;
 
-pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> Option<TransactionReceipt> {
+pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount: U256) -> Result<TransactionReceipt> {
     let contract = config.contract.clone();
+
+    log::info!("Shares address: {}", &buy_address);
 
     let mut transaction_value: U256 = contract.get_buy_price_after_fee(buy_address.clone(), amount.clone()).await.unwrap();
 
@@ -22,26 +25,25 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
                     limit = x;
                 }
                 Err(e) => {
-                    log::error!("Invalid limit price in .env: {}", e);
-                    return None;
+                    return Err(eyre!("Invalid limit price in.env: {}", e));
                 }
             }
 
             log::info!("Limit price: {}", limit);
         }
         Err(_) => {
-            return None;
+            return Err(eyre!("Limit price not set in .env."));
         }
     }
 
     if transaction_value > limit {
-        log::info!("Transaction value is greater than limit price");
-        return None;
+        return Err(eyre!("Transaction value is greater than limit price."));
     }
 
     while transaction_value == U256::zero() {
         log::info!("Waiting for user to buy shares...");
-        transaction_value = contract.get_buy_price(buy_address.clone(), amount.clone()).await.unwrap();
+        transaction_value = contract.get_buy_price_after_fee(buy_address.clone(), amount.clone()).await.unwrap();
+        log::info!("Transaction value: {}", &transaction_value);
         thread::sleep(std::time::Duration::from_millis(500));
     }
 
@@ -53,10 +55,8 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
         .gas(150000)
         .value(&transaction_value)
         .send()
-        .await
-        .expect("Failed to buy shares.")
-        .await
-        .expect("Failed to buy shares.")
+        .await?
+        .await?
         .unwrap();
 
     match transaction.status {
@@ -76,16 +76,16 @@ pub async fn call_buy_shares(config: WalletConfig, buy_address: Address, amount:
         None => {}
     }
 
-    Some(transaction)
+    Ok(transaction)
 }
 
-pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256, String> {
+pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256> {
     let contract_response = config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
         .await;
 
     match contract_response {
         Ok(_) => Ok(contract_response.unwrap()),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(eyre!(e))
     }
 }
