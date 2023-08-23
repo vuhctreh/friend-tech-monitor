@@ -1,9 +1,10 @@
-use std::thread;
+use std::{env, thread};
+use std::env::VarError;
 use ethers::prelude::TransactionReceipt;
 use ethers::types::U256;
 use ethers::types::Address;
 use crate::ethereum::config::WalletConfig;
-use crate::sniper::sniper_contract_logic::{prepare_snipe, send_snipe_transaction};
+use crate::sniper::sniper_contract_logic::{get_owned_shares, prepare_snipe, send_snipe_transaction};
 use crate::ethereum::config::{Contract};
 use eyre::Result;
 
@@ -39,6 +40,7 @@ pub async fn snipe(config: WalletConfig, address: Address) -> Result<()> {
                 },
                 1 => {
                     log::info!("Transaction successful -> Status: 1.");
+                    log::info!("Transaction hash: {}", receipt.transaction_hash);
                 },
                 y => {
                     log::info!("Transaction included with unexpected status: {}.", y);
@@ -46,6 +48,20 @@ pub async fn snipe(config: WalletConfig, address: Address) -> Result<()> {
             }
         }
         None => {}
+    }
+
+    let user_address_env: Result<String, VarError> = env::var("WALLET_ADDRESS");
+
+    match user_address_env {
+        Ok(x) => {
+            let user_address: Address = x.parse::<Address>()?;
+
+            let owned_shares = get_owned_shares(config, user_address).await?;
+            log::info!("Owned shares: {}", owned_shares);
+        }
+        Err(_) => {
+            log::error!("Could not parse address in env.");
+        }
     }
 
     Ok(())
