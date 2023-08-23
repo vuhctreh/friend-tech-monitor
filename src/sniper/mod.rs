@@ -1,2 +1,2 @@
 mod sniper_contract_logic;
-mod sniper;
+pub(crate) mod sniper;
