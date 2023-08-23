@@ -14,7 +14,6 @@ mod monitor;
 mod auth;
 mod sniper;
 
-// TODO: webhooks for panic
 // TODO: add headless google auth
 // TODO: make sniper and webhook parallel.
 // TODO: add sniper retries
