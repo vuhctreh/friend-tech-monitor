@@ -7,7 +7,8 @@ use reqwest::{Client, Response, StatusCode};
 use eyre::{eyre, Result};
 use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
-use crate::discord_utils::webhook_utils::{post_webhook, prepare_webhook};
+use crate::discord_utils::webhook_utils::{post_webhook, prepare_user_signup_embed};
+use crate::ethereum;
 use crate::{sniper};
 use crate::ethereum::config::WalletConfig;
 use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
@@ -107,7 +108,7 @@ async fn parse_response(config: WalletConfig, response: KosettoResponse, target:
             }
 
             // Prepare & send webhook
-            let webhook: Webhook = prepare_webhook(matching_user);
+            let webhook: Webhook = prepare_user_signup_embed(matching_user);
             let resp: Response = post_webhook(&client,  &webhook).await?;
 
             if resp.status() == StatusCode::OK || resp.status() == StatusCode::NO_CONTENT {

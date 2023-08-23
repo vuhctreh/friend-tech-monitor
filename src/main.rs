@@ -3,6 +3,8 @@ use std::thread;
 use dotenvy::dotenv;
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
+use crate::discord_utils::types::Webhook;
+use crate::discord_utils::webhook_utils::{post_webhook, prepare_exception_embed};
 use crate::ethereum::config::WalletConfig;
 use crate::monitor::monitor::monitor;
 
@@ -33,6 +35,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Ok(_) => {},
             Err(e) => {
                 log::error!("{:?}", e);
+                let exception_hook: Webhook = prepare_exception_embed(e);
+                post_webhook(&Client::new(), &exception_hook).await?;
                 thread::sleep(std::time::Duration::from_secs(10));
                 break;
             }
