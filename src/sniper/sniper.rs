@@ -1,23 +1,52 @@
-use ethers::types::{Address, U256};
-use ethers::utils::parse_ether;
-use eyre::{eyre, Result};
+use std::thread;
+use ethers::prelude::TransactionReceipt;
+use ethers::types::U256;
+use ethers::types::Address;
+use crate::ethereum::config::WalletConfig;
+use crate::sniper::sniper_contract_logic::{prepare_snipe, send_snipe_transaction};
 use crate::ethereum::config::{Contract};
+use eyre::Result;
 
+/// Snipes shares for a given address when available.
+/// Uses the contract to determine the price of a share.
+/// If the price is 0, will keep getting the price until
+/// p > 0. If the price is above the limit, will bubble an error.
+pub async fn snipe(config: WalletConfig, address: Address) -> Result<()> {
+    let contract: Contract = config.contract.clone();
 
-/// Checks that the value of shares is below the limit.
-/// Returns a Result<U256> if the value is below the limit.
-pub async fn prepare_snipe(contract: Contract, address: Address) -> Result<U256> {
-    let limit: U256 = parse_ether(std::env::var("LIMIT_PRICE")?)?;
+    log::info!("Preparing to snipe.");
+    log::info!("Shares address: {}", &address);
 
-    // TODO: amount hard coded to 1 for now, rework json to include limit
-    let mut transaction_value: U256 = contract.get_buy_price_after_fee(address, 1).await?;
+    let mut transaction_value: U256 = prepare_snipe(&contract, address).await?;
 
-    log::info!("Limit price: {}", limit);
-    log::info!("Projected transaction value: {}", transaction_value);
-
-    if transaction_value > limit {
-        return Err(eyre!("Transaction value is greater than limit price."));
+    // TODO: make delay configurable
+    // Updates transaction_value while it is 0 (user has not bought their first share yet)
+    while transaction_value.is_zero() {
+        log::warn!("Transaction value is 0. Waiting for user to buy their first share.");
+        transaction_value = prepare_snipe(&contract, address).await?;
+        thread::sleep(std::time::Duration::from_millis(200));
     }
 
-    Ok(transaction_value)
+    log::info!("Ready to snipe.");
+
+    let receipt: TransactionReceipt = send_snipe_transaction(contract, address, transaction_value).await?;
+
+    match receipt.status {
+        Some(x) => {
+            match x.as_u64() {
+                0 => {
+                    log::warn!("Transaction reverted -> Status: 0.");
+                },
+                1 => {
+                    log::info!("Transaction successful -> Status: 1.");
+                },
+                y => {
+                    log::info!("Transaction included with unexpected status: {}.", y);
+                },
+            }
+        }
+        None => {}
+    }
+
+    Ok(())
 }
