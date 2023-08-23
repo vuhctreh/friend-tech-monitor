@@ -7,7 +7,7 @@ use eyre::{eyre, Result};
 use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_webhook};
-use crate::ethereum;
+use crate::{sniper};
 use crate::ethereum::config::WalletConfig;
 use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
 use crate::kosetto_api::kosetto_client;
@@ -91,7 +91,7 @@ async fn parse_response(config: WalletConfig, response: KosettoResponse, target:
         Some(matching_user) => {
             match matching_user.address.parse::<Address>() {
                 Ok(address) => {
-                    let snipe_result = ethereum::sniper::snipe(&config, address, &amount).await;
+                    let snipe_result = sniper::sniper::snipe(config, address).await;
 
                     match snipe_result {
                         Ok(_) => {}
