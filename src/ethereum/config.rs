@@ -8,6 +8,9 @@ use ethers::providers::Provider;
 use ethers::signers::{LocalWallet, Signer};
 use eyre::Result;
 
+pub type Contract = FriendTechV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
+pub type SignerWallet = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
+
 abigen!(FriendTechV1, r#"[
         function buyShares(address,uint256) external
         function renounceOwnership() external
@@ -31,8 +34,8 @@ abigen!(FriendTechV1, r#"[
 #[derive(Clone)]
 pub struct WalletConfig {
     pub(crate) provider: Provider<Http>,
-    pub(crate) signer: Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>,
-    pub(crate) contract: FriendTechV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>,
+    pub(crate) signer: SignerWallet,
+    pub(crate) contract: Contract,
     pub(crate) wallet_address: Address,
 }
 
