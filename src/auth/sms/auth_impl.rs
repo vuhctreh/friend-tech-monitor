@@ -6,11 +6,11 @@ use crate::auth::generate_header_map;
 use crate::auth::sms::types::{SignTokenRequest, SignTokenResponse, SmsAuthRequest, SmsAuthResponse, SmsInitRequest};
 use crate::io_utils::cli_utils::get_code_from_cli;
 
-// TODO: make generic
+
 pub async fn init_sms_auth(client: &Client) -> Result<Response> {
     const URL: &str = "https://auth.privy.io/api/v1/passwordless_sms/init";
 
-    let sms_init_req = SmsInitRequest::new();
+    let sms_init_req = SmsInitRequest::new()?;
 
     let body = serde_json::to_string(&sms_init_req).unwrap();
 

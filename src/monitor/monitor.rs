@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::{env, thread};
 use std::time::Duration;
 use ethers::types::Address;
-use reqwest::{Client, Error, Response, StatusCode};
-use eyre::Result;
+use reqwest::{Client, Response, StatusCode};
+use eyre::{eyre, Result};
 use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_webhook};
@@ -14,12 +14,12 @@ use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
 use crate::kosetto_api::types::{KosettoResponse};
 
-pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<String> {
+pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<()> {
 
-    let monitor_map: HashMap<String, u64> = load_monitor_list();
+    let monitor_map: HashMap<String, u64> = load_monitor_list()?;
 
-    if load_monitor_list().len() == 0 {
-        panic!("Monitor list is empty");
+    if monitor_map.len() == 0usize {
+        return Err(eyre!("Monitor list is empty"));
     }
 
     let mut new_map: HashMap<String, u64> = HashMap::new();
@@ -73,16 +73,18 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
         thread::sleep(Duration::from_secs(2));
     }
 
-    write_monitor_list(new_map).expect("TODO: panic message");
+    write_monitor_list(new_map)?;
 
+    log::info!("Finished monitoring.");
     log::info!("Sleeping for: {}s", delay);
     thread::sleep(Duration::from_secs(delay));
 
-    Ok("h".to_string())
+    log::info!("-----------------------------");
+
+    Ok(())
 }
 
-async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, amount: u64, client: Client) -> Result<(), Error> {
-    // Search for monitored user in endpoint -> returns None if not found
+async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, amount: u64, client: Client) -> Result<()> {
     let res = find_user_in_search(&response, &target);
 
     match res {
@@ -105,28 +107,18 @@ async fn parse_response(config: WalletConfig, response: KosettoResponse, target:
 
             // Prepare & send webhook
             let webhook: Webhook = prepare_webhook(matching_user);
-            let resp: Result<Response, Error> = post_webhook(&client,  &webhook).await;
+            let resp: Response = post_webhook(&client,  &webhook).await?;
 
-            match resp {
-                Ok(response) => {
-                    if response.status() == StatusCode::OK || response.status() == StatusCode::NO_CONTENT {
-                        log::info!("Successfully sent webhook for: {} with status code: {}", &target, response.status());
-                    } else {
-                        // Webhook sent but not successful
-                        log::warn!("Failed to send webhook for: {} with status code: {}", &target, response.status());
-                    }
-                }
-                // Failed to send webhook
-                Err(e) => {
-                    log::warn!("Failed to send webhook for: {}", &target);
-                    log::error!("{:?}", e);
-                }
+            if resp.status() == StatusCode::OK || resp.status() == StatusCode::NO_CONTENT {
+                log::info!("Successfully sent webhook for: {} with status code: {}", &target, resp.status());
+            } else {
+                log::warn!("Failed to send webhook for: {} with status code: {}", &target, resp.status());
             }
-
         }
         None => {
             log::info!("No match found for: {}", &target);
         }
+
     }
 
     Ok(())
