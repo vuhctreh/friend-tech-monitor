@@ -1,7 +1,7 @@
 use std::env;
 use reqwest::{Client, Response};
 use reqwest::header::CONTENT_TYPE;
-use eyre::{eyre, Result};
+use eyre::{eyre, Report, Result};
 use crate::discord_utils::types::{Author, Embed, Webhook};
 use crate::kosetto_api::types::User;
 
@@ -20,8 +20,8 @@ pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response
     Ok(resp)
 }
 
-pub fn prepare_webhook(user: User) -> Webhook {
-    log::info!("Preparing Discord embed.");
+pub fn prepare_user_signup_embed(user: User) -> Webhook {
+    log::info!("Preparing user signup Discord embed.");
 
     let mut embed: Embed = Embed::new();
 
@@ -31,6 +31,20 @@ pub fn prepare_webhook(user: User) -> Webhook {
     embed.set_description(format!("Wallet: {} \n Twitter Username: {}",
                                   &user.address,
                                   &user.twitter_name));
+
+    let mut webhook: Webhook = Webhook::new();
+    webhook.set_embeds(vec!(embed));
+
+    webhook
+}
+
+pub fn prepare_exception_embed(error: Report) -> Webhook {
+    log::info!("Preparing exception Discord embed.");
+
+    let mut embed: Embed = Embed::new();
+
+    embed.set_title(format!("Bot shutting down due to the following:"));
+    embed.set_description(format!("Exception: {}", &error.to_string()));
 
     let mut webhook: Webhook = Webhook::new();
     webhook.set_embeds(vec!(embed));
