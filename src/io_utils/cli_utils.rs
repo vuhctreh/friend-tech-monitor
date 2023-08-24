@@ -1,5 +1,8 @@
+//! CLI I/O operations.
+
 use text_io::read;
 
+// Read from CLI.
 pub fn get_code_from_cli() -> String {
     log::info!("SMS sent to Phone number.");
 
