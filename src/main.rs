@@ -16,6 +16,7 @@ mod monitor;
 mod auth;
 mod sniper;
 
+// TODO: tests
 // TODO: add headless google auth
 // TODO: add sniper retries
 // TODO: add take profit
