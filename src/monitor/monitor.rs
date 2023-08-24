@@ -15,6 +15,10 @@ use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
 use crate::kosetto_api::types::{KosettoResponse, User};
 
+/// Loads the list of monitored users using monitor.json. Calls
+/// the Kosetto API for each user and checks for exact matches.
+/// Has built in delays to avoid rate limiting and
+/// overloading the API.
 pub async fn monitor(client: Client, config: WalletConfig) -> Result<()> {
 
     let monitor_map: HashMap<String, u64> = load_monitor_list()?;
@@ -89,6 +93,9 @@ pub async fn monitor(client: Client, config: WalletConfig) -> Result<()> {
     Ok(())
 }
 
+/// Checks the response from the Kosetto API for exact matches. Spawns a new thread
+/// if there are matches for the sniper so that it doesn't block the main (monitor) thread.
+/// Posts a webhook if there are matches.
 async fn parse_response(config: WalletConfig, response: KosettoResponse, target: String, client: Client) -> Result<()> {
     let res: Option<User> = find_user_in_search(&response, &target);
 
