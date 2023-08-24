@@ -1,3 +1,5 @@
+//! Implementation for Discord webhook utilities.
+
 use std::env;
 use reqwest::{Client, Response};
 use reqwest::header::CONTENT_TYPE;
@@ -5,6 +7,7 @@ use eyre::{eyre, Report, Result};
 use crate::discord_utils::types::{Author, Embed, Webhook};
 use crate::kosetto_api::types::User;
 
+/// Posts a webhook to Discord.
 pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response> {
     let webhook_url = env::var("WEBHOOK_URL")?;
 
@@ -20,6 +23,7 @@ pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response
     Ok(resp)
 }
 
+/// Creates an embed to be posted upon the monitor detecting a user signing up.
 pub fn prepare_user_signup_embed(user: User) -> Webhook {
     log::info!("Preparing user signup Discord embed.");
 
@@ -38,6 +42,8 @@ pub fn prepare_user_signup_embed(user: User) -> Webhook {
     webhook
 }
 
+/// Creates an embed to be posted if an unhandled exception occurs and the program
+/// needs to panic.
 pub fn prepare_exception_embed(error: Report) -> Webhook {
     log::info!("Preparing exception Discord embed.");
 

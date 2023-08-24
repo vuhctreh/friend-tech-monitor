@@ -1,3 +1,5 @@
+//! Sniper implementation.
+
 use std::{env, thread};
 use std::env::VarError;
 use ethers::prelude::TransactionReceipt;

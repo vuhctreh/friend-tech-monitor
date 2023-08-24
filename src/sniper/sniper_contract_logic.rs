@@ -1,10 +1,12 @@
+//! Wraps contract calls for use in the sniper.
+
 use ethers::types::{Address, TransactionReceipt, U256};
 use ethers::utils::parse_ether;
 use eyre::{eyre, Result};
 use crate::ethereum::config::{Contract, WalletConfig};
 
 /// Checks that the value of shares is below the limit.
-/// Returns a Result<U256> if the value is below the limit.
+/// Returns a `Result<U256>` if the value is below the limit.
 pub async fn prepare_snipe(contract: &Contract, address: Address) -> Result<U256> {
     let limit: U256 = parse_ether(std::env::var("LIMIT_PRICE")?)?;
 
@@ -37,6 +39,7 @@ pub async fn send_snipe_transaction(contract: Contract, address: Address, value:
     Ok(transaction)
 }
 
+// Returns the number of shares owned by the address.
 pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256> {
     let contract_response = config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
