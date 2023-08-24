@@ -4,11 +4,10 @@ use std::env::VarError;
 use std::time::Duration;
 use ethers::types::Address;
 use reqwest::{Client, Response, StatusCode};
-use eyre::{eyre, Result};
+use eyre::Result;
 use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_user_signup_embed};
-use crate::ethereum;
 use crate::{sniper};
 use crate::ethereum::config::WalletConfig;
 use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
@@ -21,7 +20,7 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
     let monitor_map: HashMap<String, u64> = load_monitor_list()?;
 
     if monitor_map.len() == 0usize {
-        return Err(eyre!("Monitor list is empty"));
+        log::warn!("monitor.json is empty. Bot will continue running in case there are snipes ongoing.");
     }
 
     let mut new_map: HashMap<String, u64> = HashMap::new();
@@ -72,7 +71,7 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
             }
         }
 
-        thread::sleep(Duration::from_secs(2));
+        thread::sleep(Duration::from_secs(1));
     }
 
     write_monitor_list(new_map)?;
@@ -93,14 +92,16 @@ async fn parse_response(config: WalletConfig, response: KosettoResponse, target:
         Some(matching_user) => {
             match matching_user.address.parse::<Address>() {
                 Ok(address) => {
-                    let snipe_result = sniper::sniper::snipe(config, address).await;
+                    tokio::spawn( async move {
+                        let snipe_result = sniper::sniper::snipe(config, address).await;
 
-                    match snipe_result {
-                        Ok(_) => {}
-                        Err(e) => {
-                            log::error!("Sniper failed with error: {}", e);
+                        match snipe_result {
+                            Ok(_) => {}
+                            Err(e) => {
+                                log::error!("Sniper failed with error: {}", e);
+                            }
                         }
-                    }
+                    });
                 },
                 Err(e) => {
                     log::error!("Could not parse address: {}", e);

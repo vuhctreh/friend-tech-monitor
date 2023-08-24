@@ -17,7 +17,6 @@ mod auth;
 mod sniper;
 
 // TODO: add headless google auth
-// TODO: make sniper and webhook parallel.
 // TODO: add sniper retries
 // TODO: add take profit
 // TODO: add inventory management
