@@ -1,3 +1,5 @@
+//! Types linked to the Kosetto API.
+
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
