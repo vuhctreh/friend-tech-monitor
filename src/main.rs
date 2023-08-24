@@ -16,8 +16,8 @@ mod monitor;
 mod auth;
 mod sniper;
 
+// TODO: tests
 // TODO: add headless google auth
-// TODO: make sniper and webhook parallel.
 // TODO: add sniper retries
 // TODO: add take profit
 // TODO: add inventory management
@@ -28,8 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().expect("ERROR: Could not load .env file.");
 
     loop {
-        let res =  monitor(Client::new(), WalletConfig::new().await?, std::env::var("DELAY")?
-            .parse::<u64>()?).await;
+        let res =  monitor(Client::new(), WalletConfig::new().await?).await;
 
         match res {
             Ok(_) => {},
