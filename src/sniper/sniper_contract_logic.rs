@@ -4,7 +4,7 @@ use eyre::{eyre, Result};
 use crate::ethereum::config::{Contract, WalletConfig};
 
 /// Checks that the value of shares is below the limit.
-/// Returns a Result<U256> if the value is below the limit.
+/// Returns a `Result<U256>` if the value is below the limit.
 pub async fn prepare_snipe(contract: &Contract, address: Address) -> Result<U256> {
     let limit: U256 = parse_ether(std::env::var("LIMIT_PRICE")?)?;
 

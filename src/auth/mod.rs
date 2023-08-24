@@ -1,7 +1,15 @@
+//! Module for generating and signing auth tokens
+//! using SMS authentication with privy.
+//!
+//! The friend.tech API has recently started requiring tokens
+//! to call specific endpoints. This module provides methods to
+//! call the relevant endpoints and verify using SMS.
+
 use reqwest::header::{ACCEPT, CONTENT_TYPE, DNT, HeaderMap, ORIGIN, REFERER, USER_AGENT};
 
 pub mod sms;
 
+/// Generates a HeaderMap of common headers to be used in requests.
 pub fn generate_header_map() -> HeaderMap {
     let mut headers: HeaderMap = HeaderMap::new();
 

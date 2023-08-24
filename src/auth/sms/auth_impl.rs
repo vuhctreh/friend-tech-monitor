@@ -1,3 +1,5 @@
+//! This module contains the implementations for SMS verification.
+
 use reqwest::{Client, Response, StatusCode};
 use reqwest::header::HeaderMap;
 use reqwest::header::*;
@@ -6,7 +8,9 @@ use crate::auth::generate_header_map;
 use crate::auth::sms::types::{SignTokenRequest, SignTokenResponse, SmsAuthRequest, SmsAuthResponse, SmsInitRequest};
 use crate::io_utils::cli_utils::get_code_from_cli;
 
-
+/// Calls privy /init endpoint to initiate SMS authentication.
+/// This sends an SMS to the phone number specified in the request
+/// containing a code.
 pub async fn init_sms_auth(client: &Client) -> Result<Response> {
     const URL: &str = "https://auth.privy.io/api/v1/passwordless_sms/init";
 
@@ -29,6 +33,10 @@ pub async fn init_sms_auth(client: &Client) -> Result<Response> {
     Ok(res)
 }
 
+/// Calls privy /authenticate endpoint to complete SMS authentication.
+/// Requires the code sent via SMS.
+///
+/// An auth token is returned in the response.
 pub async fn verify_sms_auth(client: &Client, code: String) -> Result<Response> {
     const URL: &str = "https://auth.privy.io/api/v1/passwordless_sms/authenticate";
 
@@ -51,6 +59,9 @@ pub async fn verify_sms_auth(client: &Client, code: String) -> Result<Response> 
     Ok(res)
 }
 
+/// Calls Kosetto signature endpoint to sign the auth token.
+/// The phone number used in the previous steps must match
+/// the address linked to that specific account.
 pub async fn sign_auth_token(client: &Client, address: &str, token: String) -> Result<Response> {
     const URL: &str = "https://prod-api.kosetto.com/signature";
 
@@ -75,8 +86,10 @@ pub async fn sign_auth_token(client: &Client, address: &str, token: String) -> R
     Ok(res)
 }
 
-// TODO: search for wallet in LinkedAccounts rather than using fixed index
+
+/// Combines all authentication steps into a single call.
 pub async fn generate_auth_token(client: &Client) -> Result<String> {
+    // TODO: search for wallet in LinkedAccounts rather than using fixed index
     init_sms_auth(client).await?;
 
     let code: String = get_code_from_cli();

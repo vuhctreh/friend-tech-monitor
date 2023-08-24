@@ -1,3 +1,7 @@
+//! This module contains the Request and Response structs
+//! for calling privy.io auth endpoints and Kosetto
+//! token signature.
+
 use std::{env, thread};
 use std::env::VarError;
 use serde::{Deserialize, Serialize};
