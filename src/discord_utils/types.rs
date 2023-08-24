@@ -1,3 +1,5 @@
+//! Types representing discord Webhook embeds.
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -9,6 +11,7 @@ pub struct Webhook {
 }
 
 impl Webhook {
+    // Create empty Webhook struct.
     pub fn new() -> Self {
         Self {
             content: None,
@@ -44,6 +47,7 @@ pub struct Embed {
 }
 
 impl Embed {
+    /// Create default Embed struct.
     pub fn new() -> Self {
         Self {
             title: None,
@@ -79,6 +83,7 @@ struct Footer {
 }
 
 impl Footer {
+    /// Create default Footer struct.
     pub fn new() -> Self {
         Self {
             text: "#RRN".to_string()
@@ -93,6 +98,7 @@ pub struct Author {
 }
 
 impl Author {
+    /// Create default Author struct.
     pub fn new(name: &String, icon_url: &String) -> Self {
         let name = name.to_string();
         let icon_url = icon_url.to_string();
