@@ -27,8 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().expect("ERROR: Could not load .env file.");
 
     loop {
-        let res =  monitor(Client::new(), WalletConfig::new().await?, std::env::var("DELAY")?
-            .parse::<u64>()?).await;
+        let res =  monitor(Client::new(), WalletConfig::new().await?).await;
 
         match res {
             Ok(_) => {},

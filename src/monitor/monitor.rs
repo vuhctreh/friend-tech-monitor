@@ -15,7 +15,7 @@ use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;
 use crate::kosetto_api::types::{KosettoResponse, User};
 
-pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result<()> {
+pub async fn monitor(client: Client, config: WalletConfig) -> Result<()> {
 
     let monitor_map: HashMap<String, u64> = load_monitor_list()?;
 
@@ -70,15 +70,19 @@ pub async fn monitor(client: Client, config: WalletConfig, delay: u64) -> Result
                 new_map.insert(key.clone(), *value);
             }
         }
-
-        thread::sleep(Duration::from_secs(1));
+        // Delay between monitor searches (default 2000ms or 2s)
+        thread::sleep(Duration::from_millis(env::var("MONITOR_DELAY").unwrap_or("2000".to_string()).parse::<u64>()?));
     }
 
+    // Delay between monitor cycles (default 10 000ms or 10s)
+    let delay: u64 = env::var("GENERAL_DELAY").unwrap_or("10000".to_string()).parse::<u64>()?;
+
+    // update monitor.json
     write_monitor_list(new_map)?;
 
     log::info!("Finished monitoring.");
-    log::info!("Sleeping for: {}s", delay);
-    thread::sleep(Duration::from_secs(delay));
+    log::info!("Sleeping for: {}ms", delay);
+    thread::sleep(Duration::from_millis(delay));
 
     log::info!("-----------------------------");
 

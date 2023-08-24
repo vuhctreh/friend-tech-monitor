@@ -20,12 +20,14 @@ pub async fn snipe(config: WalletConfig, address: Address) -> Result<()> {
 
     let mut transaction_value: U256 = prepare_snipe(&contract, address).await?;
 
-    // TODO: make delay configurable
     // Updates transaction_value while it is 0 (user has not bought their first share yet)
     while transaction_value.is_zero() {
+        // Delay between monitor cycles (default 200ms or 0.2s)
+        let delay = env::var("SNIPER_DELAY").unwrap_or("200".to_string()).parse::<u64>()?;
         log::warn!("Transaction value is 0. Waiting for {} to buy their first share.", &address);
+
         transaction_value = prepare_snipe(&contract, address).await?;
-        thread::sleep(std::time::Duration::from_millis(200));
+        thread::sleep(std::time::Duration::from_millis(delay));
     }
 
     log::info!("Ready to snipe.");
