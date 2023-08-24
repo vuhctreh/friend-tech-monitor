@@ -1,3 +1,5 @@
+//! Wraps contract calls for use in the sniper.
+
 use ethers::types::{Address, TransactionReceipt, U256};
 use ethers::utils::parse_ether;
 use eyre::{eyre, Result};
@@ -37,6 +39,7 @@ pub async fn send_snipe_transaction(contract: Contract, address: Address, value:
     Ok(transaction)
 }
 
+// Returns the number of shares owned by the address.
 pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256> {
     let contract_response = config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
