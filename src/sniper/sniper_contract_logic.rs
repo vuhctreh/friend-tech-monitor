@@ -3,7 +3,7 @@
 use ethers::types::{Address, TransactionReceipt, U256};
 use ethers::utils::parse_ether;
 use eyre::{eyre, Result};
-use crate::ethereum::commons::{Contract, WalletConfig};
+use crate::ethereum::commons::{Contract, WalletCommons};
 
 /// Checks that the value of shares is below the limit.
 /// Returns a `Result<U256>` if the value is below the limit.
@@ -11,7 +11,7 @@ pub async fn prepare_snipe(contract: &Contract, address: Address) -> Result<U256
     let limit: U256 = parse_ether(std::env::var("LIMIT_PRICE")?)?;
 
     // TODO: amount hard coded to 1 for now, rework json to include limit
-    let mut transaction_value: U256 = contract.get_buy_price_after_fee(address, U256::from(1)).await?;
+    let transaction_value: U256 = contract.get_buy_price_after_fee(address, U256::from(1)).await?;
 
     log::info!("Limit price: {}", limit);
     log::info!("Projected transaction value: {}", transaction_value);
@@ -40,7 +40,7 @@ pub async fn send_snipe_transaction(contract: Contract, address: Address, value:
 }
 
 // Returns the number of shares owned by the address.
-pub async fn get_owned_shares(config: WalletConfig, address: Address) -> Result<U256> {
+pub async fn get_owned_shares(config: WalletCommons, address: Address) -> Result<U256> {
     let contract_response = config.contract.clone().shares_balance(address, config.wallet_address.clone())
         .call()
         .await?;

@@ -5,7 +5,7 @@ use std::env::VarError;
 use ethers::prelude::TransactionReceipt;
 use ethers::types::U256;
 use ethers::types::Address;
-use crate::ethereum::commons::WalletConfig;
+use crate::ethereum::commons::WalletCommons;
 use crate::sniper::sniper_contract_logic::{get_owned_shares, prepare_snipe, send_snipe_transaction};
 use crate::ethereum::commons::{Contract};
 use eyre::Result;
@@ -14,7 +14,7 @@ use eyre::Result;
 /// Uses the contract to determine the price of a share.
 /// If the price is 0, will keep getting the price until
 /// p > 0. If the price is above the limit, will bubble an error.
-pub async fn snipe(config: WalletConfig, address: Address) -> Result<()> {
+pub async fn snipe(config: WalletCommons, address: Address) -> Result<()> {
     let contract: Contract = config.contract.clone();
 
     log::info!("Preparing to snipe.");
