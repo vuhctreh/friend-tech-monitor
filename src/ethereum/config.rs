@@ -1,35 +1,15 @@
 use std::sync::Arc;
 use ethers::core::types::{Address};
-use ethers::contract::abigen;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::prelude::{Http, Middleware, Wallet};
 use ethers::providers::Provider;
 use ethers::signers::{LocalWallet, Signer};
 use eyre::Result;
+use crate::ethereum::contract::FriendtechSharesV1;
 
-pub type Contract = FriendTechV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
+pub type Contract = FriendtechSharesV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 pub type SignerWallet = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
-
-abigen!(FriendTechV1, r#"[
-        function buyShares(address,uint256) external
-        function renounceOwnership() external
-        function sellShares(address,uint256) external
-        function setFeeDestination(address) external
-        function setProtocolFeePercent(uint256) external
-        function transferOwnership(address) external
-        function getBuyPrice(address,uint256) external view returns ( uint256 )
-        function getBuyPriceAfterFee(address,uint256) external view returns ( uint256 )
-        function getPrice(uint256,uint256) external pure returns ( uint256 )
-        function getSellPrice(address,uint256) external view returns ( uint256 )
-        function getSellPriceAfterFee(address,uint256) external view returns ( uint256 )
-        function owner() external view returns ( address )
-        function protocolFeeDestination() external view returns ( address )
-        function protocolFeePercent() external view returns ( uint256 )
-        function sharesBalance(address,address) external view returns ( uint256 )
-        function sharesSupply(address) external view returns ( uint256 )
-        function subjectFeePercent() external view returns ( uint256 )
-    ]"#);
 
 #[derive(Clone)]
 pub struct WalletConfig {
@@ -65,7 +45,7 @@ impl WalletConfig {
 
 
         // Contract on Base
-        let contract = FriendTechV1::new("0xCF205808Ed36593aa40a44F10c7f7C2F67d4A4d4"
+        let contract = FriendtechSharesV1::new("0xCF205808Ed36593aa40a44F10c7f7C2F67d4A4d4"
                                              .parse::<Address>()?, signer.clone());
 
         Ok(Self {
