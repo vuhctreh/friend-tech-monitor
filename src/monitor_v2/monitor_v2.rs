@@ -27,6 +27,7 @@ pub async fn get_previous_block_txs(provider: &Provider<Http>) -> Result<Option<
     }
 }
 
+// TODO: make sure transactions did not revert.
 pub fn filter_signup_txs(txs: Vec<Transaction>) -> Result<Vec<BuySharesCall>> {
     let friend_tech_address: Address = Address::from_str(ADDRESS)?;
 
