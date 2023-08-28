@@ -14,30 +14,28 @@
 //! - `friend.tech contract:` <https://basescan.org/address/0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4#readContract>
 //! - `base:` <https://base.org/>
 
-#![allow(unused)]
 use std::error::Error;
 use std::thread;
+use std::time::Duration;
 use dotenvy::dotenv;
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_exception_embed};
-use crate::ethereum::commons::WalletConfig;
-use crate::monitor::monitor::monitor;
+use crate::ethereum::commons::WalletCommons;
+use crate::monitor_v2::monitor_v2::monitor_v2;
 
 mod kosetto_api;
 mod discord_utils;
 mod io_utils;
 mod ethereum;
-mod monitor;
 mod auth;
 mod sniper;
 mod monitor_v2;
 
-// TODO: Monitor V2 (search blocks for friend.tech contract calls -> hit friend.tech user endpoint)
-// TODO: Config  V2 (Move from .env to json, add modes for sniping and monitoring)
+// TODO: Sniper V2
+// TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
 // TODO: tests
-// TODO: add headless google auth
 // TODO: add sniper retries
 // TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
@@ -47,18 +45,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().expect("ERROR: Could not load .env file.");
 
     loop {
-        let res =  monitor(Client::new(), WalletConfig::new().await?).await;
+        let res = monitor_v2(WalletCommons::new().await?).await;
 
         match res {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 log::error!("{:?}", e);
                 let exception_hook: Webhook = prepare_exception_embed(e);
                 post_webhook(&Client::new(), &exception_hook).await?;
-                thread::sleep(std::time::Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(10));
                 break;
             }
         }
+
+        thread::sleep(Duration::from_millis(500));
     }
 
     Ok(())
