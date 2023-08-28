@@ -1,36 +1,22 @@
 //! Implementations for calling the Kosetto (friend.tech) API.
 
+use ethers::types::Address;
 use reqwest::{Client, Response};
-use crate::kosetto_api::types::{KosettoResponse, User};
 use eyre::Result;
 
-/// Calls search/users to check if a user has has signed up.
-pub async fn search_user(client: &Client, user: &String, token: String) -> Result<Response> {
+/// Gets a user by their address. This endpoint does not need a token.
+pub async fn get_user_by_address(client: &Client, address: Address) -> Result<Response> {
+    log::info!("Getting user info for address: {}", address);
 
-    log::info!("Searching for user: {}", user);
-
-    let url: String = format!("https://prod-api.kosetto.com/search/users?username={}", user);
+    // Read this for explanation on formatting:
+    // https://stackoverflow.com/questions/57350082/to-convert-a-ethereum-typesh256-to-string-in-rust
+    let url: String = format!("https://prod-api.kosetto.com/users/{:#x}", address);
 
     let resp = client.get(url)
-        .header("authorization", token)
-        .send()
-        .await?;
+       .send()
+       .await?;
 
     log::info!("Got user info.");
 
     Ok(resp)
-}
-
-// Finds exact match for a user in search_user response.
-pub fn find_user_in_search(user_info: &KosettoResponse, monitor_target: &String) -> Option<User> {
-    for user in user_info.users.iter() {
-        if user.twitter_username == monitor_target.clone() {
-            log::info!("Found user {}.", monitor_target);
-            return Some(user.clone());
-        } else {
-            log::info!("{} did not match monitor target.", user.twitter_username.clone());
-        }
-    }
-
-    None
 }
