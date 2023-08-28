@@ -12,14 +12,14 @@ pub type Contract = FriendtechSharesV1<SignerMiddleware<Provider<Http>, Wallet<S
 pub type SignerWallet = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 
 #[derive(Clone)]
-pub struct WalletConfig {
+pub struct WalletCommons {
     pub(crate) provider: Provider<Http>,
     pub(crate) signer: SignerWallet,
     pub(crate) contract: Contract,
     pub(crate) wallet_address: Address,
 }
 
-impl WalletConfig {
+impl WalletCommons {
     pub async fn new() -> Result<Self> {
         let wallet_address = std::env::var("WALLET_ADDRESS")?.parse::<Address>()?;
 
