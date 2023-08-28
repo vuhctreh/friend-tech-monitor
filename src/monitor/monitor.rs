@@ -9,7 +9,7 @@ use crate::auth::sms::auth_impl::generate_auth_token;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_user_signup_embed};
 use crate::{sniper};
-use crate::ethereum::config::WalletConfig;
+use crate::ethereum::commons::WalletConfig;
 use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
 use crate::kosetto_api::kosetto_client;
 use crate::kosetto_api::kosetto_client::find_user_in_search;

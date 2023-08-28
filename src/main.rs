@@ -22,7 +22,7 @@ use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_exception_embed};
-use crate::ethereum::config::WalletConfig;
+use crate::ethereum::commons::WalletConfig;
 use crate::monitor::monitor::monitor;
 
 mod kosetto_api;

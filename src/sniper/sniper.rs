@@ -5,9 +5,9 @@ use std::env::VarError;
 use ethers::prelude::TransactionReceipt;
 use ethers::types::U256;
 use ethers::types::Address;
-use crate::ethereum::config::WalletConfig;
+use crate::ethereum::commons::WalletConfig;
 use crate::sniper::sniper_contract_logic::{get_owned_shares, prepare_snipe, send_snipe_transaction};
-use crate::ethereum::config::{Contract};
+use crate::ethereum::commons::{Contract};
 use eyre::Result;
 
 /// Snipes shares for a given address when available.

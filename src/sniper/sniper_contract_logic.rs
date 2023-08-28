@@ -3,7 +3,7 @@
 use ethers::types::{Address, TransactionReceipt, U256};
 use ethers::utils::parse_ether;
 use eyre::{eyre, Result};
-use crate::ethereum::config::{Contract, WalletConfig};
+use crate::ethereum::commons::{Contract, WalletConfig};
 
 /// Checks that the value of shares is below the limit.
 /// Returns a `Result<U256>` if the value is below the limit.
