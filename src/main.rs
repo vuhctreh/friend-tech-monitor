@@ -14,6 +14,7 @@
 //! - `friend.tech contract:` <https://basescan.org/address/0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4#readContract>
 //! - `base:` <https://base.org/>
 
+#![allow(unused)]
 use std::error::Error;
 use std::thread;
 use dotenvy::dotenv;
@@ -31,13 +32,14 @@ mod ethereum;
 mod monitor;
 mod auth;
 mod sniper;
+mod monitor_v2;
 
-// TODO: change from .env to json
+// TODO: Monitor V2 (search blocks for friend.tech contract calls -> hit friend.tech user endpoint)
+// TODO: Config  V2 (Move from .env to json, add modes for sniping and monitoring)
 // TODO: tests
 // TODO: add headless google auth
 // TODO: add sniper retries
-// TODO: add take profit
-// TODO: add inventory management
+// TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     SimpleLogger::new().init().unwrap();
