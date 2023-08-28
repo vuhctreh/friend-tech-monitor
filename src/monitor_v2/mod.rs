@@ -1,22 +1,24 @@
-//! Some constraints: We are looking for first share purchases on friend.tech (a.k.a when a
-//! user first signs up). From the contract, we know that only the user themselves may purchase
-//! their own first share, and that at a price of 0. Thus, we can assume that every successful
-//! buyShares contract call with a value of 0 is a first share purchase. Since Base is built on
-//! the OP stack, there is no mempool for pending transactions. What we must do instead is
-//! go through each block and look for calls to the friend.tech - parsing transactions accordingly.
-//! The problem: there is a block every 2∼ seconds, and, although the ETH JSON RPC provides us
-//! the eth_getTransactionReceipts method, it only lists transaction hashes. Thus, we have to
-//! call the JSON RPC endpoint for each transaction receipt and parse each one individually.
-//! This is slow and may not fit into the 2s time frame if there are too many transactions
-//! (each rpc call is ∼120ms). Alternatively, we could use the alchemy_getTransactionReceipts method
-//! which shows us data for each transaction (including logs). The problem here is that we don't get
-//! call data from this method. Luckily, friend.tech only has 2 events - Trade (what we're interested
-//! in) and OwnershipTransferred (which is unlikely to be emitted).
-//! The final option would be to call eth_getTransactionReceipts and simply parse each transaction
-//! in parallel.
+//! Monitor V1 (now deprecated) was implemented such that it would
+//! ping the friend.tech "search" endpoint every n seconds for each
+//! "monitored" profile. Although this was reliable, it was fairly
+//! slow, prone to rate limiting (although afaik there was none in
+//! place) and not parallel (thus longer lists = worse performance).
 //!
-//! **Note: the alchemy_getTransactionReceipts method uses 250CU (computing units) per call.**
-//! **This means, if we call it every 2 seconds, our use case goes beyond the free tier.**
-// TODO: Rewrite this ^
+//! The new monitor calls the Base JSON RPC, grabs and filters
+//! looks for "buyShares" calls of value 0. Since Base uses the
+//! Optimism stack, the mempool is private; we can therefore not
+//! use pending transactions. Instead, we get transactions from each block
+//! and filter them as mentioned above, after which we call the friend.tech
+//! users/{address} endpoint to get specific details on the user. This
+//!
+//! Since there are blocks every 2 seconds,
+//! we must make sure this process finished within the 2 second window.
+//!
+//! Most of the performance relies on api response times (RPC, friend.tech).
+//! Whereas the only real way to improve RPC performance is by using a better RPC,
+//! We can call friend.tech on a separate thread, avoiding blocking the monitor.
+//! It is also important to note that there is a delay of ≈1s between confirmed
+//! first share purchases and a user signing up. By calling this endpoint,
+//! concurrently with the monitor, we can avoid this delay.
 
 pub mod monitor_v2;
