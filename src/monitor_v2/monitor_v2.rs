@@ -66,9 +66,9 @@ pub async fn monitor_v2(commons: WalletCommons) -> Result<()> {
 
     let previous_block_txs: Option<Vec<Transaction>> = get_previous_block_txs(&provider).await?;
 
-    let filtered_transactions: Option<Vec<BuySharesCall>> = match &previous_block_txs {
+    let filtered_transactions: Option<Vec<BuySharesCall>> = match previous_block_txs {
         Some(txs) => {
-            Some(filter_signup_txs(previous_block_txs.clone().unwrap())?)
+            Some(filter_signup_txs(txs)?)
         },
         None => None,
     };
@@ -120,8 +120,6 @@ pub async fn monitor_v2(commons: WalletCommons) -> Result<()> {
     }
 
     Ok(())
-
-
 }
 
 
