@@ -20,6 +20,8 @@ use std::error::Error;
 use std::thread;
 use std::time::Duration;
 use dotenvy::dotenv;
+use ethers::middleware::Middleware;
+use ethers::types::BlockNumber;
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
@@ -46,19 +48,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     dotenv().expect("ERROR: Could not load .env file.");
 
-    loop {
-        let res = monitor_v2(WalletCommons::new().await?).await;
+    let commons: WalletCommons = WalletCommons::new().await?;
 
-        match res {
-            Ok(_) => {}
-            Err(e) => {
-                log::error!("{:?}", e);
-                let exception_hook: Webhook = prepare_exception_embed(e);
-                post_webhook(&Client::new(), &exception_hook).await?;
-                thread::sleep(Duration::from_secs(10));
-                break;
+    let mut prev_block_number = BlockNumber::Earliest;
+
+    loop {
+        let block_number: BlockNumber = BlockNumber::from(&commons.provider.get_block_number().await?);
+
+        log::info!("Current block number: {}", &block_number);
+
+        if block_number != prev_block_number {
+            let res = monitor_v2(&commons, block_number).await;
+
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("{:?}", e);
+                    let exception_hook: Webhook = prepare_exception_embed(e);
+                    post_webhook(&Client::new(), &exception_hook).await?;
+                    thread::sleep(Duration::from_secs(10));
+                    break;
+                }
             }
         }
+
+        prev_block_number = block_number;
 
         thread::sleep(Duration::from_millis(500));
     }
