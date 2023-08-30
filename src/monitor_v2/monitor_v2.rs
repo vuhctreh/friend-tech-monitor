@@ -19,8 +19,7 @@ use crate::sniper::sniper::snipe;
 
 const ADDRESS: &str = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 
-// TODO: delays
-pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> Result<()> {
+pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> Result<Option<()>> {
     let provider: Provider<Http> = commons.provider.clone();
 
     // let monitor_map: HashMap<String, u64> = load_monitor_list()?;
@@ -31,60 +30,61 @@ pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> R
     //
     // let mut _new_map: HashMap<String, u64> = HashMap::new();
 
-    let previous_block_txs: Option<Vec<Transaction>> = get_previous_block_txs(&provider,  block_number).await?;
+    let previous_block: Option<Block<Transaction>> = get_previous_block_txs(&provider,  block_number).await?;
 
-    let filtered_transactions: Vec<BuySharesCall> = match previous_block_txs {
-        Some(txs) => {
-            filter_signup_txs(txs)?
-        },
-        None => vec![]
-    };
+    match previous_block {
+        Some(block) => {
+            let previous_block_txs: Vec<Transaction> = block.transactions;
 
-    if filtered_transactions.len() > 0 {
-        log::info!("Buys in block: {}", filtered_transactions.len());
+            let filtered_transactions: Vec<BuySharesCall> = filter_signup_txs(previous_block_txs)?;
 
-        for tx in filtered_transactions {
-            tokio::spawn(async move {
-                let thread_client: Client = Client::new();
+            if filtered_transactions.len() > 0 {
+                log::info!("Buys in block: {}", filtered_transactions.len());
 
-                let user_data: Result<ExactUser> = resolve_user_by_address(&thread_client, tx.shares_subject.clone()).await;
+                for tx in filtered_transactions {
+                    tokio::spawn(async move {
+                        let thread_client: Client = Client::new();
 
-                match user_data {
-                    Ok(data) => {
+                        let user_data: Result<ExactUser> = resolve_user_by_address(&thread_client, tx.shares_subject.clone()).await;
 
-                        // Sniping logic
-                        // let thread_data = data.clone();
-                        // tokio::spawn(async move {
-                        //     log::info!("Sniping");
-                        //
-                        //     let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
-                        //     let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
-                        //     let _ = snipe(snipe_commons, address).await;
-                        // });
+                        match user_data {
+                            Ok(data) => {
 
-                        let webhook: Webhook = prepare_user_signup_embed(data);
-                        let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
-                    }
-                    Err(e) => {
-                        log::error!("Failed to resolve user with address: {}, {}", tx.clone(), e);
-                    }
+                                // Sniping logic
+                                // let thread_data = data.clone();
+                                // tokio::spawn(async move {
+                                //     log::info!("Sniping");
+                                //
+                                //     let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
+                                //     let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
+                                //     let _ = snipe(snipe_commons, address).await;
+                                // });
+
+                                let webhook: Webhook = prepare_user_signup_embed(data);
+                                let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
+                            }
+                            Err(e) => {
+                                log::error!("Failed to resolve user with address: {}, {}", tx.clone(), e);
+                            }
+                        }
+                    });
+                    // if monitor_map.contains_key(&user_data.address) {
+                    //     let webhook: Webhook = prepare_user_signup_embed(matching_user);
+                    //     let resp: Response = post_webhook(&client,  &webhook).await?;
+                    // }
                 }
-            });
-            // if monitor_map.contains_key(&user_data.address) {
-            //     let webhook: Webhook = prepare_user_signup_embed(matching_user);
-            //     let resp: Response = post_webhook(&client,  &webhook).await?;
-            // }
+            }
+            Ok(Some(()))
         }
+        None => return Ok(None)
     }
-
-    Ok(())
 }
 
-pub async fn get_previous_block_txs(provider: &Provider<Http>, block_number: BlockNumber) -> Result<Option<Vec<Transaction>>> {
+pub async fn get_previous_block_txs(provider: &Provider<Http>, block_number: BlockNumber) -> Result<Option<Block<Transaction>>> {
     let transactions: Option<Block<Transaction>> = provider.get_block_with_txs(block_number).await?;
 
     match transactions {
-        Some(block) => Ok(Some(block.transactions)),
+        Some(block) => Ok(Some(block)),
         None => Ok(None)
     }
 }
@@ -125,14 +125,14 @@ pub async fn resolve_user_by_address(client: &Client, address: Address) -> Resul
             while user.status() == StatusCode::BAD_GATEWAY {
                 log::warn!("502 error getting user. Retrying...");
                 user = get_user_by_address(&client, address).await?;
-                thread::sleep(std::time::Duration::from_millis(350));
+                thread::sleep(std::time::Duration::from_millis(std::env::var("SECONDARY_DELAY").unwrap_or("400".to_string()).parse().unwrap()));
             }
         }
         StatusCode::NOT_FOUND => {
             while user.status() == StatusCode::NOT_FOUND {
                 log::warn!("404 error getting user. Retrying...");
                 user = get_user_by_address(client, address).await?;
-                thread::sleep(std::time::Duration::from_millis(350));
+                thread::sleep(std::time::Duration::from_millis(std::env::var("SECONDARY_DELAY").unwrap_or("400".to_string()).parse().unwrap()));
             }
         }
         _ => {
