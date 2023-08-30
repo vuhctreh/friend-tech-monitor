@@ -9,6 +9,8 @@ use crate::kosetto_api::types::{User};
 
 /// Posts a webhook to Discord.
 pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response> {
+    log::info!("Posting webhook to Discord...");
+
     let webhook_url = env::var("WEBHOOK_URL")?;
 
     if webhook_url.is_empty() { return Err(eyre!("WEBHOOK_URL is not set.")) }
