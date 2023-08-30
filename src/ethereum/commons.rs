@@ -5,6 +5,7 @@ use ethers::middleware::SignerMiddleware;
 use ethers::prelude::{Http, Middleware, Wallet};
 use ethers::providers::Provider;
 use ethers::signers::{LocalWallet, Signer};
+use ethers::types::U256;
 use eyre::Result;
 use crate::ethereum::contract::FriendtechSharesV1;
 
@@ -20,7 +21,7 @@ pub struct WalletCommons {
 }
 
 impl WalletCommons {
-    pub async fn new() -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let wallet_address = std::env::var("WALLET_ADDRESS")?.parse::<Address>()?;
 
         let provider = Provider::<Http>::try_from(
@@ -29,7 +30,7 @@ impl WalletCommons {
 
         let signer = Arc::new({
 
-            let chain_id = provider.get_chainid().await?;
+            let chain_id: U256 = U256::from(8453);
 
             let wallet = std::env::var("PRIVATE_KEY")?
                 .parse::<LocalWallet>()?
