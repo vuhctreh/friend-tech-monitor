@@ -15,6 +15,7 @@ use crate::io_utils::json_loader::load_monitor_list;
 use crate::ethereum::commons::WalletCommons;
 use crate::kosetto_api::kosetto_client::get_user_by_address;
 use crate::kosetto_api::types::ExactUser;
+use crate::sniper::sniper::snipe;
 
 const ADDRESS: &str = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 
@@ -50,7 +51,17 @@ pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> R
 
                 match user_data {
                     Ok(data) => {
-                        // tokio::spawn(async move {});
+
+                        // Sniping logic
+                        // let thread_data = data.clone();
+                        // tokio::spawn(async move {
+                        //     log::info!("Sniping");
+                        //
+                        //     let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
+                        //     let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
+                        //     let _ = snipe(snipe_commons, address).await;
+                        // });
+
                         let webhook: Webhook = prepare_user_signup_embed(data);
                         let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
                     }
