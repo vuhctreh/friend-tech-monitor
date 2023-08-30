@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     dotenv().expect("ERROR: Could not load .env file.");
 
-    let commons: WalletCommons = WalletCommons::new().await?;
+    let commons: WalletCommons = WalletCommons::new()?;
 
     let mut prev_block_number = BlockNumber::Earliest;
 
