@@ -14,14 +14,14 @@
 //! - `friend.tech contract:` <https://basescan.org/address/0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4#readContract>
 //! - `base:` <https://base.org/>
 
-
 #![allow(unused)]
 use std::error::Error;
 use std::thread;
 use std::time::Duration;
 use dotenvy::dotenv;
 use ethers::middleware::Middleware;
-use ethers::types::BlockNumber;
+use ethers::types::{BlockNumber, U64};
+use log::{info, log};
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
@@ -50,31 +50,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let commons: WalletCommons = WalletCommons::new()?;
 
-    let mut prev_block_number = BlockNumber::Earliest;
+    let mut block_number: U64 = commons.provider.get_block_number().await?;
+
+    info!("Initial block number: {}", &block_number);
 
     loop {
-        let block_number: BlockNumber = BlockNumber::from(&commons.provider.get_block_number().await?);
+        info!("Current block number: {}", &block_number);
 
-        log::info!("Current block number: {}", &block_number);
+        let res = monitor_v2(&commons, BlockNumber::from(block_number)).await;
 
-        if block_number != prev_block_number {
-            let res = monitor_v2(&commons, block_number).await;
-
-            match res {
-                Ok(_) => {}
-                Err(e) => {
-                    log::error!("{:?}", e);
-                    let exception_hook: Webhook = prepare_exception_embed(e);
-                    post_webhook(&Client::new(), &exception_hook).await?;
-                    thread::sleep(Duration::from_secs(10));
-                    break;
-                }
+        match res {
+            Ok(Some(())) => {
+                block_number = block_number + 1;
+            }
+            Ok(None) => {}
+            Err(e) => {
+                log::error!("{:?}", e);
+                let exception_hook: Webhook = prepare_exception_embed(e);
+                post_webhook(&Client::new(), &exception_hook).await?;
+                thread::sleep(Duration::from_secs(10));
+                break;
             }
         }
-
-        prev_block_number = block_number;
-
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(std::env::var("MONITOR_DELAY").unwrap_or("750".to_string()).parse().unwrap()));
     }
 
     Ok(())
