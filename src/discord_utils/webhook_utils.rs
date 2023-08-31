@@ -5,10 +5,12 @@ use reqwest::{Client, Response};
 use reqwest::header::CONTENT_TYPE;
 use eyre::{eyre, Report, Result};
 use crate::discord_utils::types::{Author, Embed, Webhook};
-use crate::kosetto_api::types::User;
+use crate::kosetto_api::types::{User};
 
 /// Posts a webhook to Discord.
 pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response> {
+    log::info!("Posting webhook to Discord...");
+
     let webhook_url = env::var("WEBHOOK_URL")?;
 
     if webhook_url.is_empty() { return Err(eyre!("WEBHOOK_URL is not set.")) }
@@ -24,17 +26,17 @@ pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response
 }
 
 /// Creates an embed to be posted upon the monitor detecting a user signing up.
-pub fn prepare_user_signup_embed(user: User) -> Webhook {
+pub fn prepare_user_signup_embed<T: User>(user: T) -> Webhook {
     log::info!("Preparing user signup Discord embed.");
 
     let mut embed: Embed = Embed::new();
 
-    embed.set_author(Author::new(&user.twitter_username, &user.twitter_pfp_url));
+    embed.set_author(Author::new(&user.get_username(), &user.get_pfp_url()));
 
     embed.set_title("New User Sign Up".to_string());
     embed.set_description(format!("Wallet: {} \n Twitter Username: {}",
-                                  &user.address,
-                                  &user.twitter_name));
+                                  &user.get_address(),
+                                  &user.get_name()));
 
     let mut webhook: Webhook = Webhook::new();
     webhook.set_embeds(vec!(embed));

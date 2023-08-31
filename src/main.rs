@@ -14,49 +14,65 @@
 //! - `friend.tech contract:` <https://basescan.org/address/0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4#readContract>
 //! - `base:` <https://base.org/>
 
+#![allow(unused)]
 use std::error::Error;
 use std::thread;
+use std::time::Duration;
 use dotenvy::dotenv;
+use ethers::middleware::Middleware;
+use ethers::types::{BlockNumber, U64};
+use log::{info, log};
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_exception_embed};
-use crate::ethereum::config::WalletConfig;
-use crate::monitor::monitor::monitor;
+use crate::ethereum::commons::WalletCommons;
+use crate::monitor_v2::monitor_v2::monitor_v2;
 
 mod kosetto_api;
 mod discord_utils;
 mod io_utils;
 mod ethereum;
-mod monitor;
 mod auth;
 mod sniper;
+mod monitor_v2;
 
-// TODO: change from .env to json
+// TODO: Sniper V2
+// TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
 // TODO: tests
-// TODO: add headless google auth
 // TODO: add sniper retries
-// TODO: add take profit
-// TODO: add inventory management
+// TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     SimpleLogger::new().init().unwrap();
 
     dotenv().expect("ERROR: Could not load .env file.");
 
+    let commons: WalletCommons = WalletCommons::new()?;
+
+    let mut block_number: U64 = commons.provider.get_block_number().await?;
+
+    info!("Initial block number: {}", &block_number);
+
     loop {
-        let res =  monitor(Client::new(), WalletConfig::new().await?).await;
+        info!("Current block number: {}", &block_number);
+
+        let res = monitor_v2(&commons, BlockNumber::from(block_number)).await;
 
         match res {
-            Ok(_) => {},
+            Ok(Some(())) => {
+                block_number = block_number + 1;
+            }
+            Ok(None) => {}
             Err(e) => {
                 log::error!("{:?}", e);
                 let exception_hook: Webhook = prepare_exception_embed(e);
                 post_webhook(&Client::new(), &exception_hook).await?;
-                thread::sleep(std::time::Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(10));
                 break;
             }
         }
+        thread::sleep(Duration::from_millis(std::env::var("MONITOR_DELAY").unwrap_or("750".to_string()).parse().unwrap()));
     }
 
     Ok(())
