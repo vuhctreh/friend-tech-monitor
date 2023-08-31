@@ -103,7 +103,9 @@ pub fn filter_signup_txs(txs: Vec<Transaction>) -> Result<Vec<BuySharesCall>> {
 
                     match data {
                         FriendtechSharesV1Calls::BuyShares(x) => {
-                            filtered_txs.push(x);
+                            if x.amount == U256::one() {
+                                filtered_txs.push(x);
+                            }
                         },
                         _ => {}
                     }
