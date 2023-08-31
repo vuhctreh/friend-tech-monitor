@@ -37,7 +37,6 @@ mod auth;
 mod sniper;
 mod monitor_v2;
 
-// TODO: Sniper V2
 // TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
 // TODO: tests
 // TODO: add sniper retries

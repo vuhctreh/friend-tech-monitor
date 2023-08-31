@@ -51,14 +51,14 @@ pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> R
                             Ok(data) => {
 
                                 // Sniping logic
-                                // let thread_data = data.clone();
-                                // tokio::spawn(async move {
-                                //     log::info!("Sniping");
-                                //
-                                //     let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
-                                //     let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
-                                //     let _ = snipe(snipe_commons, address).await;
-                                // });
+                                let thread_data = data.clone();
+                                tokio::spawn(async move {
+                                    log::info!("Sniping");
+
+                                    let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
+                                    let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
+                                    let _ = snipe(snipe_commons, address).await;
+                                });
 
                                 let webhook: Webhook = prepare_user_signup_embed(data);
                                 let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
