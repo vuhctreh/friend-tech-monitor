@@ -12,7 +12,7 @@ pub use friendtech_shares_v1::*;
 pub mod friendtech_shares_v1 {
     const _: () = {
         ::core::include_bytes!(
-            "/Users/victor/Code/friend-tech-monitor/friend-tech-abi.json",
+            "../../friend-tech-abi.json",
         );
     };
     #[allow(deprecated)]
