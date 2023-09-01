@@ -38,8 +38,6 @@ mod sniper;
 mod monitor_v2;
 
 // TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
-// TODO: tests
-// TODO: add sniper retries
 // TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
