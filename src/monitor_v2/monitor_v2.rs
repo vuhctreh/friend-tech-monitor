@@ -17,6 +17,25 @@ use crate::kosetto_api::kosetto_client::get_user_by_address;
 use crate::kosetto_api::types::ExactUser;
 use crate::sniper::sniper::snipe;
 
+#[derive(PartialEq)]
+enum SniperState {
+    Enabled,
+    Disabled
+}
+
+impl FromStr for SniperState {
+    type Err = ();
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "ENABLED" => Ok(SniperState::Enabled),
+            "DISABLED" => Ok(SniperState::Disabled),
+            "" => Ok(SniperState::Disabled),
+            _ => Err(())
+        }
+    }
+}
+
 const ADDRESS: &str = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 
 pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> Result<Option<()>> {
@@ -50,15 +69,27 @@ pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> R
                         match user_data {
                             Ok(data) => {
 
-                                // Sniping logic
-                                let thread_data = data.clone();
-                                tokio::spawn(async move {
-                                    log::info!("Sniping");
+                                let load_sniper_state: Result<SniperState, ()> = SniperState::from_str(&*std::env::var("SNIPER").unwrap());
 
-                                    let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
-                                    let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
-                                    let _ = snipe(snipe_commons, address).await;
-                                });
+                                match load_sniper_state {
+                                    Ok(state) => {
+                                        match state {
+                                            SniperState::Enabled => {
+                                                // Sniper initialisation
+                                                let thread_data = data.clone();
+                                                tokio::spawn(async move {
+                                                    log::info!("Sniping");
+
+                                                    let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
+                                                    let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
+                                                    let _ = snipe(snipe_commons, address).await;
+                                                });
+                                            }
+                                            SniperState::Disabled => {}
+                                        }
+                                    }
+                                    Err(_) => { log::info!("Sniper state not found, defaulting to disabled."); }
+                                };
 
                                 let webhook: Webhook = prepare_user_signup_embed(data);
                                 let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
@@ -120,21 +151,30 @@ pub fn filter_signup_txs(txs: Vec<Transaction>) -> Result<Vec<BuySharesCall>> {
 
 pub async fn resolve_user_by_address(client: &Client, address: Address) -> Result<ExactUser> {
     let mut user: Response = get_user_by_address(client, address).await?;
+    let secondary_delay: u64= std::env::var("SECONDARY_DELAY").unwrap().parse().unwrap();
 
     match user.status() {
         StatusCode::OK => {}
         StatusCode::BAD_GATEWAY => {
-            while user.status() == StatusCode::BAD_GATEWAY {
+            for i in 0..19 {
+                if user.status() != StatusCode::BAD_GATEWAY { break;}
                 log::warn!("502 error getting user. Retrying...");
                 user = get_user_by_address(&client, address).await?;
-                thread::sleep(std::time::Duration::from_millis(std::env::var("SECONDARY_DELAY").unwrap_or("400".to_string()).parse().unwrap()));
+                thread::sleep(std::time::Duration::from_millis(secondary_delay));
+                if i == 18 {
+                    log::warn!("Exceeded max retries. Aborting.")
+                }
             }
         }
         StatusCode::NOT_FOUND => {
-            while user.status() == StatusCode::NOT_FOUND {
+            for i in 0..19 {
+                if user.status() != StatusCode::NOT_FOUND { break; }
                 log::warn!("404 error getting user. Retrying...");
                 user = get_user_by_address(client, address).await?;
-                thread::sleep(std::time::Duration::from_millis(std::env::var("SECONDARY_DELAY").unwrap_or("400".to_string()).parse().unwrap()));
+                thread::sleep(std::time::Duration::from_millis(secondary_delay));
+                if i == 18 {
+                    log::warn!("Exceeded max retries. Aborting.")
+                }
             }
         }
         _ => {
