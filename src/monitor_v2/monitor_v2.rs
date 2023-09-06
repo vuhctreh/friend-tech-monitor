@@ -11,43 +11,16 @@ use reqwest::{Client, Response, StatusCode};
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_user_signup_embed};
 use crate::ethereum::contract::{BuySharesCall, FriendtechSharesV1Calls};
-use crate::io_utils::json_loader::load_monitor_list;
+use crate::io_utils::json_loader::{load_monitor_list, write_monitor_list};
 use crate::ethereum::commons::WalletCommons;
 use crate::kosetto_api::kosetto_client::get_user_by_address;
 use crate::kosetto_api::types::ExactUser;
 use crate::sniper::sniper::snipe;
 
-#[derive(PartialEq)]
-enum SniperState {
-    Enabled,
-    Disabled
-}
-
-impl FromStr for SniperState {
-    type Err = ();
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "ENABLED" => Ok(SniperState::Enabled),
-            "DISABLED" => Ok(SniperState::Disabled),
-            "" => Ok(SniperState::Disabled),
-            _ => Err(())
-        }
-    }
-}
-
 const ADDRESS: &str = "0xcf205808ed36593aa40a44f10c7f7c2f67d4a4d4";
 
 pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> Result<Option<()>> {
     let provider: Provider<Http> = commons.provider.clone();
-
-    // let monitor_map: HashMap<String, u64> = load_monitor_list()?;
-    //
-    // if monitor_map.len() == 0usize {
-    //     log::warn!("monitor.json is empty. Bot will continue running in case there are snipes ongoing.");
-    // }
-    //
-    // let mut _new_map: HashMap<String, u64> = HashMap::new();
 
     let previous_block: Option<Block<Transaction>> = get_previous_block_txs(&provider,  block_number).await?;
 
@@ -62,47 +35,47 @@ pub async fn monitor_v2(commons: &WalletCommons, block_number: BlockNumber) -> R
 
                 for tx in filtered_transactions {
                     tokio::spawn(async move {
+                        let mut monitor_map: HashMap<String, u64> = load_monitor_list().unwrap();
+
+                        if monitor_map.len() == 0usize {
+                            log::warn!("monitor.json is empty. Bot will continue running in case there are snipes ongoing.");
+                        }
+
                         let thread_client: Client = Client::new();
 
                         let user_data: Result<ExactUser> = resolve_user_by_address(&thread_client, tx.shares_subject.clone()).await;
 
                         match user_data {
                             Ok(data) => {
+                                let monitored_users = monitor_map.clone();
 
-                                let load_sniper_state: Result<SniperState, ()> = SniperState::from_str(&*std::env::var("SNIPER").unwrap());
+                                // Sniper initialisation
+                                if monitored_users.contains_key(&data.twitter_username) {
+                                    let amount = monitored_users.get(&data.twitter_username).unwrap().clone();
 
-                                match load_sniper_state {
-                                    Ok(state) => {
-                                        match state {
-                                            SniperState::Enabled => {
-                                                // Sniper initialisation
-                                                let thread_data = data.clone();
-                                                tokio::spawn(async move {
-                                                    log::info!("Sniping");
+                                    log::info!("Monitored user found: {}", &data.twitter_username);
+                                    let thread_data = data.clone();
+                                    tokio::spawn(async move {
+                                        log::info!("Sending snipe transaction.");
 
-                                                    let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
-                                                    let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
-                                                    let _ = snipe(snipe_commons, address).await;
-                                                });
-                                            }
-                                            SniperState::Disabled => {}
-                                        }
-                                    }
-                                    Err(_) => { log::info!("Sniper state not found, defaulting to disabled."); }
-                                };
+                                        let address: Address = Address::from_str(&*thread_data.address.clone()).unwrap();
+                                        let snipe_commons: WalletCommons = WalletCommons::new().unwrap();
+                                        let _ = snipe(snipe_commons, address, amount).await;
+                                    });
+                                }
 
-                                let webhook: Webhook = prepare_user_signup_embed(data);
+                                let webhook: Webhook = prepare_user_signup_embed(data.clone());
                                 let _resp: Response = post_webhook(&thread_client,  &webhook).await.unwrap();
+
+                                monitor_map.remove(&*data.twitter_username);
+                                write_monitor_list(monitor_map);
+
                             }
                             Err(e) => {
                                 log::error!("Failed to resolve user with address: {}, {}", tx.clone(), e);
                             }
                         }
                     });
-                    // if monitor_map.contains_key(&user_data.address) {
-                    //     let webhook: Webhook = prepare_user_signup_embed(matching_user);
-                    //     let resp: Response = post_webhook(&client,  &webhook).await?;
-                    // }
                 }
             }
             Ok(Some(()))
