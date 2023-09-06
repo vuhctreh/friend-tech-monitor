@@ -18,12 +18,10 @@ pub struct WalletCommons {
     pub(crate) provider: Provider<Http>,
     pub(crate) signer: SignerWallet,
     pub(crate) contract: Contract,
-    pub(crate) wallet_address: Address,
 }
 
 impl WalletCommons {
     pub fn new() -> Result<Self> {
-        let wallet_address = std::env::var("WALLET_ADDRESS")?.parse::<Address>()?;
 
         let provider = Provider::<Http>::try_from(
             std::env::var("RPC_URL")?
@@ -47,7 +45,6 @@ impl WalletCommons {
             provider,
             signer,
             contract,
-            wallet_address,
         })
     }
 }
