@@ -12,7 +12,7 @@ use crate::sniper::sniper_contract_logic::{send_snipe_transaction};
 use crate::ethereum::commons::{Contract};
 use eyre::{Result, eyre};
 
-// TODO: gas, amounts.
+// TODO: gas.
 /// Snipes shares for a given address using custom contract.
 pub async fn snipe(commons: WalletCommons, address: Address, amount: u64) -> Result<()> {
     let contract: Contract = commons.contract.clone();
