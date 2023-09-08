@@ -5,7 +5,7 @@ use ethers::utils::parse_ether;
 use eyre::{eyre, Result};
 use crate::ethereum::commons::{Contract, WalletCommons};
 
-/// Calls the buy_shares function on the friend.tech contract.
+/// Calls the magical_buy_shares function on the custom sniper contract.
 pub async fn send_snipe_transaction(contract: Contract, address: Address, amount: U256) -> Result<TransactionReceipt> {
     log::info!("Sending transaction...");
 
