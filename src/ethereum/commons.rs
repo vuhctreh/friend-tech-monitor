@@ -8,8 +8,9 @@ use ethers::signers::{LocalWallet, Signer};
 use ethers::types::U256;
 use eyre::Result;
 use crate::ethereum::contract::FriendtechSharesV1;
+use crate::sniper::sniper_contract::BruhTech;
 
-pub type Contract = FriendtechSharesV1<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
+pub type Contract = BruhTech<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 pub type SignerWallet = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 
 #[derive(Clone)]
@@ -17,12 +18,10 @@ pub struct WalletCommons {
     pub(crate) provider: Provider<Http>,
     pub(crate) signer: SignerWallet,
     pub(crate) contract: Contract,
-    pub(crate) wallet_address: Address,
 }
 
 impl WalletCommons {
     pub fn new() -> Result<Self> {
-        let wallet_address = std::env::var("WALLET_ADDRESS")?.parse::<Address>()?;
 
         let provider = Provider::<Http>::try_from(
             std::env::var("RPC_URL")?
@@ -39,21 +38,13 @@ impl WalletCommons {
             SignerMiddleware::new(provider.clone(), wallet)
         });
 
-        // Contract on Goerli
-        // let contract = FriendTechV1::new("0xEeaA6B7290F35D588072272E75f1D5eA57827f4f"
-        //                                      .parse::<Address>()
-        //                                      .expect("ERROR: Could not parse contract."), signer.clone());
-
-
-        // Contract on Base
-        let contract = FriendtechSharesV1::new("0xCF205808Ed36593aa40a44F10c7f7C2F67d4A4d4"
+        let contract = BruhTech::new("0x54980Af862D1272e87396a1E05eB93FB6c542B1C"
                                              .parse::<Address>()?, signer.clone());
 
         Ok(Self {
             provider,
             signer,
             contract,
-            wallet_address,
         })
     }
 }

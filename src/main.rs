@@ -19,6 +19,7 @@ use std::error::Error;
 use std::thread;
 use std::time::Duration;
 use dotenvy::dotenv;
+use ethers::contract::Abigen;
 use ethers::middleware::Middleware;
 use ethers::types::{BlockNumber, U64};
 use log::{info, log};
