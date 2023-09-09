@@ -47,6 +47,9 @@ pub async fn monitor_v2(commons: &ApplicationCommons, block_number: BlockNumber,
     Ok(0)
 }
 
+/// Given a Vec of BuySharesCall, calls the friend.tech api to link the address in each buySharesCall
+/// to a twitter/friend.tech account in parallel. Also posts a Discord Webhook/RabbitMQ message if
+/// a user is successfully resolved.
 pub async fn parse_filtered_txs(filtered_transactions: Vec<BuySharesCall>, channel: Arc<Channel>, client: Arc<Client>) -> Result<()> {
     if filtered_transactions.len() > 0 {
         log::info!("Buys in block: {}", filtered_transactions.len());
@@ -117,6 +120,7 @@ pub async fn parse_filtered_txs(filtered_transactions: Vec<BuySharesCall>, chann
     Ok(())
 }
 
+/// Gets the list of transactions in a block given a block number.
 pub async fn get_previous_block_txs(provider: &Provider<Http>, block_number: BlockNumber) -> Result<Option<Block<Transaction>>> {
     let transactions: Option<Block<Transaction>> = provider.get_block_with_txs(block_number).await?;
 
@@ -126,6 +130,8 @@ pub async fn get_previous_block_txs(provider: &Provider<Http>, block_number: Blo
     }
 }
 
+/// Iterates through a Vec<Transaction> to find transactions that call the friend.tech BuyShares
+/// function with value 0, amount 1 and where the sharesSubject parameter is the same as tx.from.
 pub fn filter_signup_txs(txs: Vec<Transaction>) -> Result<Vec<BuySharesCall>> {
     let friend_tech_address: Address = Address::from_str(ADDRESS)?;
 
@@ -154,6 +160,7 @@ pub fn filter_signup_txs(txs: Vec<Transaction>) -> Result<Vec<BuySharesCall>> {
     Ok(filtered_txs)
 }
 
+/// Calls the friend.tech /user/{address} endpoint until a user is found or max retries (20) is reached.
 pub async fn resolve_user_by_address(client: Arc<Client>, address: Address) -> Result<ExactUser> {
     let mut user: Response = get_user_by_address(client.clone(), address).await?;
     let secondary_delay: u64= std::env::var("SECONDARY_DELAY").unwrap().parse().unwrap();
