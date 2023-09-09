@@ -1,5 +1,5 @@
 //! Types linked to the Kosetto API.
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub trait User {
     fn get_username(&self) -> String;
@@ -42,7 +42,7 @@ impl User for SearchedUser {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExactUser {
     pub id: u64,
