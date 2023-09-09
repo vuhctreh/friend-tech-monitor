@@ -7,6 +7,7 @@ use ethers::providers::Provider;
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::U256;
 use eyre::Result;
+use reqwest::Client;
 use crate::ethereum::contract::FriendtechSharesV1;
 use crate::sniper::sniper_contract::BruhTech;
 
@@ -14,14 +15,17 @@ pub type Contract = BruhTech<SignerMiddleware<Provider<Http>, Wallet<SigningKey>
 pub type SignerWallet = Arc<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>;
 
 #[derive(Clone)]
-pub struct WalletCommons {
+pub struct ApplicationCommons {
     pub(crate) provider: Provider<Http>,
     pub(crate) signer: SignerWallet,
     pub(crate) contract: Contract,
+    pub(crate) client: Arc<Client>,
 }
 
-impl WalletCommons {
+impl ApplicationCommons {
     pub fn new() -> Result<Self> {
+
+        let client = Arc::new(Client::new());
 
         let provider = Provider::<Http>::try_from(
             std::env::var("RPC_URL")?
@@ -45,6 +49,7 @@ impl WalletCommons {
             provider,
             signer,
             contract,
+            client
         })
     }
 }
