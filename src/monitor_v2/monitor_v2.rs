@@ -74,7 +74,7 @@ pub async fn parse_filtered_txs(filtered_transactions: Vec<BuySharesCall>, chann
                     Ok(data) => {
                         let monitored_users = monitor_map.clone();
 
-                        // // Sniper initialisation
+                        // // Sniper initialisation (temporarily disabled)
                         // if monitored_users.contains_key(&data.twitter_username) {
                         //     let amount = monitored_users.get(&data.twitter_username).unwrap().clone();
                         //
