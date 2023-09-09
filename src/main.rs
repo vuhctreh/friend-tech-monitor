@@ -16,19 +16,22 @@
 
 #![allow(unused)]
 use std::error::Error;
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use dotenvy::dotenv;
 use ethers::contract::Abigen;
 use ethers::middleware::Middleware;
 use ethers::types::{BlockNumber, U64};
+use lapin::Channel;
 use log::{info, log};
 use reqwest::{Client};
 use simple_logger::SimpleLogger;
 use crate::discord_utils::types::Webhook;
 use crate::discord_utils::webhook_utils::{post_webhook, prepare_exception_embed};
-use crate::ethereum::commons::WalletCommons;
+use crate::ethereum::commons::ApplicationCommons;
 use crate::monitor_v2::monitor_v2::monitor_v2;
+use crate::rabbitmq::init_broker::rabbit_init;
 
 mod kosetto_api;
 mod discord_utils;
@@ -37,8 +40,9 @@ mod ethereum;
 mod auth;
 mod sniper;
 mod monitor_v2;
+mod rabbitmq;
 
-// TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
+// TODO (maybe): Config V2 (Move from .env to json?)
 // TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -46,7 +50,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     dotenv().expect("ERROR: Could not load .env file.");
 
-    let commons: WalletCommons = WalletCommons::new()?;
+    let channel: Arc<Channel> = Arc::new(rabbit_init().await?);
+
+    let commons: ApplicationCommons = ApplicationCommons::new()?;
 
     let mut block_number: U64 = commons.provider.get_block_number().await?;
 
@@ -55,20 +61,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     loop {
         info!("Current block number: {}", &block_number);
 
-        let res = monitor_v2(&commons, BlockNumber::from(block_number)).await;
+        let res = monitor_v2(&commons, BlockNumber::from(block_number), channel.clone()).await;
 
         match res {
-            Ok(Some(())) => {
+            Ok(1) => {
                 block_number = block_number + 1;
             }
-            Ok(None) => {}
             Err(e) => {
                 log::error!("{:?}", e);
                 let exception_hook: Webhook = prepare_exception_embed(e);
-                post_webhook(&Client::new(), &exception_hook).await?;
+                post_webhook(commons.client.clone(), &exception_hook).await?;
                 thread::sleep(Duration::from_secs(10));
                 break;
             }
+            _ => {}
         }
         thread::sleep(Duration::from_millis(std::env::var("MONITOR_DELAY").unwrap_or("750".to_string()).parse().unwrap()));
     }

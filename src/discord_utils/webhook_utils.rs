@@ -1,6 +1,7 @@
 //! Implementation for Discord webhook utilities.
 
 use std::env;
+use std::sync::Arc;
 use reqwest::{Client, Response};
 use reqwest::header::CONTENT_TYPE;
 use eyre::{eyre, Report, Result};
@@ -8,7 +9,7 @@ use crate::discord_utils::types::{Author, Embed, Webhook};
 use crate::kosetto_api::types::{User};
 
 /// Posts a webhook to Discord.
-pub async fn post_webhook(client: &Client, webhook: &Webhook) -> Result<Response> {
+pub async fn post_webhook(client: Arc<Client>, webhook: &Webhook) -> Result<Response> {
     log::info!("Posting webhook to Discord...");
 
     let webhook_url = env::var("WEBHOOK_URL")?;
