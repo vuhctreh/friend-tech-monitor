@@ -6,7 +6,7 @@ use ethers::abi::AbiDecode;
 use ethers::prelude::k256::elliptic_curve::rand_core::block::BlockRngCore;
 use ethers::providers::{Http, Middleware, Provider};
 use ethers::types::{Address, Block, BlockNumber, Transaction, U256};
-use eyre::{Result};
+use eyre::{eyre, Result};
 use lapin::{BasicProperties, Channel};
 use lapin::options::BasicPublishOptions;
 use reqwest::{Client, Response, StatusCode};
@@ -92,11 +92,13 @@ pub async fn parse_filtered_txs(filtered_transactions: Vec<BuySharesCall>, chann
                         let webhook: Webhook = prepare_user_signup_embed(data.clone());
                         let _resp: Response = post_webhook(client.clone(), &webhook).await.unwrap();
 
+                        let payload: String = serde_json::to_string(&data)?;
+
                          channel.basic_publish(
                             "",
                                     "hello",
                                     BasicPublishOptions::default(),
-                            format!("name: {}", data.twitter_username.clone()).as_bytes(),
+                            payload.as_bytes(),
                                     BasicProperties::default(),
                                 )
                                 .await.unwrap()
@@ -110,7 +112,7 @@ pub async fn parse_filtered_txs(filtered_transactions: Vec<BuySharesCall>, chann
                     }
                     Err(e) => {
                         log::error!("Failed to resolve user with address: {}, {}", tx.clone(), e);
-                        Err("")
+                        Err(eyre!(""))
                     }
                 }
             });
