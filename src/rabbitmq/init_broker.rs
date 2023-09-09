@@ -29,19 +29,6 @@ pub async fn rabbit_init() -> Result<Channel> {
 
     log::info!("Declared queue");
 
-    // let payload: &[u8] = b"The slow grey wolf";
-    //
-    // let confirm = channel_a
-    //     .basic_publish(
-    //         "",
-    //         "hello",
-    //         BasicPublishOptions::default(),
-    //         payload,
-    //         BasicProperties::default(),
-    //     )
-    //     .await?
-    //     .await?;
-
     Ok(channel_a)
 }
 

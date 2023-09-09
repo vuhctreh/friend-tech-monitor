@@ -42,7 +42,7 @@ mod sniper;
 mod monitor_v2;
 mod rabbitmq;
 
-// TODO: Config V2 (Move from .env to json, add modes for sniping and monitoring)
+// TODO (maybe): Config V2 (Move from .env to json?)
 // TODO: add inventory management (separate service: TP, sell, view inv...)
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
