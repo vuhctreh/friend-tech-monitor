@@ -25,24 +25,24 @@ pub struct ApplicationCommons {
 impl ApplicationCommons {
     pub fn new() -> Result<Self> {
 
-        let client = Arc::new(Client::new());
+        let client: Arc<Client> = Arc::new(Client::new());
 
-        let provider = Provider::<Http>::try_from(
+        let provider: Provider<Http> = Provider::<Http>::try_from(
             std::env::var("RPC_URL")?
         )?;
 
-        let signer = Arc::new({
+        let signer: SignerWallet = Arc::new({
 
             let chain_id: U256 = U256::from(8453);
 
-            let wallet = std::env::var("PRIVATE_KEY")?
+            let wallet: Wallet<SigningKey> = std::env::var("PRIVATE_KEY")?
                 .parse::<LocalWallet>()?
                 .with_chain_id(chain_id.as_u64());
 
             SignerMiddleware::new(provider.clone(), wallet)
         });
 
-        let contract = BruhTech::new("0x12EB1263F1755CF29b6c4D5Fb3EEa908c1769105"
+        let contract: Contract = BruhTech::new("0x12EB1263F1755CF29b6c4D5Fb3EEa908c1769105"
                                              .parse::<Address>()?, signer.clone());
 
         Ok(Self {
