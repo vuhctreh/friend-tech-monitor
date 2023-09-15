@@ -42,7 +42,7 @@ impl ApplicationCommons {
             SignerMiddleware::new(provider.clone(), wallet)
         });
 
-        let contract = BruhTech::new("0x41174Fc07f338FfF8cf59D4CB65c0Ab3374e79B5"
+        let contract = BruhTech::new("0x12EB1263F1755CF29b6c4D5Fb3EEa908c1769105"
                                              .parse::<Address>()?, signer.clone());
 
         Ok(Self {
