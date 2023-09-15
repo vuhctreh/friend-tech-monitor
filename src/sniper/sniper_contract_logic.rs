@@ -9,7 +9,7 @@ use crate::ethereum::commons::{Contract, ApplicationCommons};
 pub async fn send_snipe_transaction(contract: Contract, address: Address, amount: U256) -> Result<TransactionReceipt> {
     log::info!("Sending transaction...");
 
-    let transaction = contract.magical_buy_shares(address, amount)
+    let transaction: Option<TransactionReceipt> = contract.magical_buy_shares(address, amount)
         .gas(150000)
         .send()
         .await?
