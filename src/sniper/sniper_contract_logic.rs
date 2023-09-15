@@ -13,8 +13,14 @@ pub async fn send_snipe_transaction(contract: Contract, address: Address, amount
         .gas(150000)
         .send()
         .await?
-        .await?
-        .unwrap();
+        .await?;
 
-    Ok(transaction)
+    match transaction {
+        Some(tx) => {
+            Ok(tx)
+        }
+        None => {
+            return Err(eyre!("Transaction was not sent."));
+        }
+    }
 }
