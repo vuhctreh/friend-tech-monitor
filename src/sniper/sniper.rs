@@ -34,7 +34,9 @@ pub async fn snipe(commons: ApplicationCommons, address: Address, amount: u64) -
                 },
             }
         }
-        None => {}
+        None => {
+            log::warn!("Transaction was not sent -> Status: None.");
+        }
     }
 
     Ok(())
